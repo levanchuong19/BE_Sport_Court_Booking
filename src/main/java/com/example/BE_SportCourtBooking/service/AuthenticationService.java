@@ -7,8 +7,10 @@ import com.example.BE_SportCourtBooking.exception.DuplicateEntity;
 import com.example.BE_SportCourtBooking.model.Request.LoginRequest;
 import com.example.BE_SportCourtBooking.model.Request.RegisterRequest;
 import com.example.BE_SportCourtBooking.model.Response.AccountResponse;
+import com.example.BE_SportCourtBooking.model.Response.EmailDetail;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.Email;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -41,12 +43,20 @@ public class AuthenticationService implements UserDetailsService {
     @Autowired
     ModelMapper modelMapper;
 
+    @Autowired
+    EmailService emailService;
+
     public AccountResponse register (RegisterRequest registerRequest){
         Account account = modelMapper.map(registerRequest, Account.class);
         try {
             account.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
             account.setRole(Role.CUSTOMER);
             accountRepository.save(account);
+            EmailDetail emailDetail = new EmailDetail();
+            emailDetail.setAccount(account);
+            emailDetail.setSubject("Chào mừng bạn đến với SportZone");
+            emailDetail.setLink("http://localhost:5173/");
+            emailService.sendEmail(emailDetail);
             return modelMapper.map(account, AccountResponse.class);
         } catch (Exception e) {
             if (e.getMessage().contains(account.getEmail())) {
