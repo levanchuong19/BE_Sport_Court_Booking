@@ -75,6 +75,7 @@ public class Filter extends OncePerRequestFilter {
             "/api/login",
             "/api/register",
             "/api/forgot-password",
+            "api/change-password",
             "/websocket/**"
     );
 
