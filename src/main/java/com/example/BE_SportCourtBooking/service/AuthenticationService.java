@@ -4,10 +4,14 @@ import com.example.BE_SportCourtBooking.entity.Account;
 import com.example.BE_SportCourtBooking.entity.Enum.Role;
 import com.example.BE_SportCourtBooking.exception.AccountNotFoundException;
 import com.example.BE_SportCourtBooking.exception.DuplicateEntity;
+import com.example.BE_SportCourtBooking.model.Request.ChangePasswordRequest;
+import com.example.BE_SportCourtBooking.model.Request.ForgotPasswordRequest;
 import com.example.BE_SportCourtBooking.model.Request.LoginRequest;
 import com.example.BE_SportCourtBooking.model.Request.RegisterRequest;
 import com.example.BE_SportCourtBooking.model.Response.AccountResponse;
+import com.example.BE_SportCourtBooking.model.Response.ChangePasswordResponse;
 import com.example.BE_SportCourtBooking.model.Response.EmailDetail;
+import com.example.BE_SportCourtBooking.model.Response.ForgotPasswordResponse;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.Email;
@@ -23,7 +27,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 @Service
@@ -84,6 +90,8 @@ public class AuthenticationService implements UserDetailsService {
         }
     }
 
+
+
     public List<Account> getAllAccounts() {
         List<Account> accounts = accountRepository.findAll();
         return accounts;
@@ -106,5 +114,57 @@ public class AuthenticationService implements UserDetailsService {
             throw new EntityNotFoundException("User not found");
         }
         return account;
+    }
+
+    private String generateRandomPassword(int length) {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder password = new StringBuilder();
+        Random random = new SecureRandom();
+        for (int i = 0; i < length; i++) {
+            password.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return password.toString();
+    }
+
+
+    // send email, set new password for user
+    public ForgotPasswordResponse forgotPassword(ForgotPasswordRequest request) {
+        Account account = accountRepository.findAccountByEmail(request.getEmail());
+        if (account == null) {
+            throw new RuntimeException("Account not found");
+        }
+
+        String newPassword = generateRandomPassword(8);
+        account.setPassword(passwordEncoder.encode(newPassword));
+        accountRepository.save(account);
+
+        // Truyền thêm newPassword vào hàm gửi email
+        emailService.sendEmailForgotPassword(account, newPassword);
+
+        ForgotPasswordResponse response = new ForgotPasswordResponse();
+        response.setMessage("A new password has been sent to your email.");
+        return response;
+    }
+
+    public ChangePasswordResponse changePassword(ChangePasswordRequest request, UUID accountId) {
+        // Lấy account theo ID (hoặc từ security context)
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        // Kiểm tra mật khẩu hiện tại đúng không
+        if (!passwordEncoder.matches(request.getPassword(), account.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        // Kiểm tra newPassword và confirmNewPassword giống nhau không
+        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+            throw new RuntimeException("New passwords do not match");
+        }
+
+        // Cập nhật mật khẩu mới
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        accountRepository.save(account);
+
+        return new ChangePasswordResponse("Password changed successfully");
     }
 }
