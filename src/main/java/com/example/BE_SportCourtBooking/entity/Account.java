@@ -114,4 +114,8 @@ public class Account implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+    @OneToMany(mappedBy = "courtManager", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Court> courts;
 }

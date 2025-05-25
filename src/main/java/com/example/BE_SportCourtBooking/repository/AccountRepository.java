@@ -8,5 +8,5 @@ import java.util.UUID;
 public interface AccountRepository extends JpaRepository<Account, UUID> {
     Account findAccountById(UUID id);
     Account findAccountByPhone(String phone);
-    Account findAccountByEmail(String email);
+    Account findAccountByFullName(String fullName);
 }
