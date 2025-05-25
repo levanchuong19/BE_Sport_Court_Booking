@@ -1,16 +1,11 @@
 package com.example.BE_SportCourtBooking.api;
 
 import com.example.BE_SportCourtBooking.entity.Account;
-import com.example.BE_SportCourtBooking.model.Request.ChangePasswordRequest;
-import com.example.BE_SportCourtBooking.model.Request.ForgotPasswordRequest;
-import com.example.BE_SportCourtBooking.model.Request.LoginRequest;
-import com.example.BE_SportCourtBooking.model.Request.RegisterRequest;
-import com.example.BE_SportCourtBooking.model.Response.AccountResponse;
-import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
-import com.example.BE_SportCourtBooking.model.Response.ChangePasswordResponse;
-import com.example.BE_SportCourtBooking.model.Response.ForgotPasswordResponse;
+import com.example.BE_SportCourtBooking.model.Request.*;
+import com.example.BE_SportCourtBooking.model.Response.*;
 import com.example.BE_SportCourtBooking.service.AuthenticationService;
 import com.example.BE_SportCourtBooking.service.EmailService;
+import com.google.protobuf.Api;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,5 +99,13 @@ public class AuthenticationAPI {
             ApiResponse response = createResponse(400, false, "Change password failed", e.getMessage());
             return ResponseEntity.ok(response);
         }
+    }
+
+    // Endpoint to handle Google login
+    @PostMapping("/google/login")
+    public ResponseEntity<ApiResponse> googleLogin(@RequestBody GoogleLoginRequest request) {
+        var result = authenticationService.authenticateWithGoogle(request); // Handle Google token here
+        ApiResponse response= createResponse(200, true, "Login Google successfully !", result);
+        return ResponseEntity.ok(response);
     }
 }

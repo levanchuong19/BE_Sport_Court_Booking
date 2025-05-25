@@ -4,15 +4,14 @@ import com.example.BE_SportCourtBooking.entity.Account;
 import com.example.BE_SportCourtBooking.entity.Enum.Role;
 import com.example.BE_SportCourtBooking.exception.AccountNotFoundException;
 import com.example.BE_SportCourtBooking.exception.DuplicateEntity;
-import com.example.BE_SportCourtBooking.model.Request.ChangePasswordRequest;
-import com.example.BE_SportCourtBooking.model.Request.ForgotPasswordRequest;
-import com.example.BE_SportCourtBooking.model.Request.LoginRequest;
-import com.example.BE_SportCourtBooking.model.Request.RegisterRequest;
-import com.example.BE_SportCourtBooking.model.Response.AccountResponse;
-import com.example.BE_SportCourtBooking.model.Response.ChangePasswordResponse;
-import com.example.BE_SportCourtBooking.model.Response.EmailDetail;
-import com.example.BE_SportCourtBooking.model.Response.ForgotPasswordResponse;
+import com.example.BE_SportCourtBooking.model.Request.*;
+import com.example.BE_SportCourtBooking.model.Response.*;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.firebase.ErrorCode;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.Email;
 import org.modelmapper.ModelMapper;
@@ -28,6 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -167,4 +167,48 @@ public class AuthenticationService implements UserDetailsService {
 
         return new ChangePasswordResponse("Password changed successfully");
     }
+
+    // Adding Google Client ID o day
+    private final GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
+            .setAudience(Collections.singletonList("YOUR_GOOGLE_CLIENT_ID"))
+            .build();
+
+    public GoogleLoginResponse authenticateWithGoogle(GoogleLoginRequest request) {
+        try {
+            GoogleIdToken idToken = verifier.verify(request.getToken());
+            if (idToken == null) {
+                throw new RuntimeException("ID token verification failed");
+            }
+
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+
+            Account account = accountRepository.findAccountByEmail(email);
+            if (account == null) {
+                // Create new account
+                account = new Account();
+                account.setEmail(email);
+                account.setFullName((String) payload.get("name"));
+                account.setPassword(passwordEncoder.encode("12345")); // default password
+                account.setRole(Role.CUSTOMER); // default role
+                account.setIsDelete(false);
+                accountRepository.save(account);
+            }
+
+            if (Boolean.TRUE.equals(account.getIsDelete())) {
+                throw new RuntimeException("Account is marked as deleted");
+            }
+
+            String token = tokenService.generateToken(account);
+
+            return GoogleLoginResponse.builder()
+                    .token(token)
+                    .authenticated(true)
+                    .build();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Google login authentication failed", e);
+        }
+    }
+
 }
