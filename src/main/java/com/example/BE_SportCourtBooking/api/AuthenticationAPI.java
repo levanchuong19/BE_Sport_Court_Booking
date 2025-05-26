@@ -5,7 +5,11 @@ import com.example.BE_SportCourtBooking.model.Request.LoginRequest;
 import com.example.BE_SportCourtBooking.model.Request.RegisterRequest;
 import com.example.BE_SportCourtBooking.model.Response.AccountResponse;
 import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
+import com.example.BE_SportCourtBooking.model.Request.*;
+import com.example.BE_SportCourtBooking.model.Response.*;
 import com.example.BE_SportCourtBooking.service.AuthenticationService;
+import com.example.BE_SportCourtBooking.service.EmailService;
+import com.google.protobuf.Api;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,4 +78,38 @@ public class AuthenticationAPI {
         }
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse> forgotPassword(@RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+        try {
+            ForgotPasswordResponse forgotPasswordResponse = authenticationService.forgotPassword(forgotPasswordRequest);
+            ApiResponse response = createResponse(200, true, "Send successfully", forgotPasswordResponse);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse response = createResponse(400, false, "Sending email failed", e.getMessage());
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse> changePassword(
+            @RequestBody ChangePasswordRequest changePasswordRequest,
+            @RequestHeader("accountId") UUID accountId) { // giả sử bạn truyền accountId trong header
+
+        try {
+            ChangePasswordResponse changePasswordResponse = authenticationService.changePassword(changePasswordRequest, accountId);
+            ApiResponse response = createResponse(200, true, "Change password successfully", changePasswordResponse);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse response = createResponse(400, false, "Change password failed", e.getMessage());
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    // Endpoint to handle Google login
+    @PostMapping("/google/login")
+    public ResponseEntity<ApiResponse> googleLogin(@RequestBody GoogleLoginRequest request) {
+        var result = authenticationService.authenticateWithGoogle(request); // Handle Google token here
+        ApiResponse response= createResponse(200, true, "Login Google successfully !", result);
+        return ResponseEntity.ok(response);
+    }
 }
