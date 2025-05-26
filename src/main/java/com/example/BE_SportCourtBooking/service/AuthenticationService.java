@@ -4,11 +4,14 @@ import com.example.BE_SportCourtBooking.entity.Account;
 import com.example.BE_SportCourtBooking.entity.Enum.Role;
 import com.example.BE_SportCourtBooking.exception.AccountNotFoundException;
 import com.example.BE_SportCourtBooking.exception.DuplicateEntity;
-import com.example.BE_SportCourtBooking.model.Request.LoginRequest;
-import com.example.BE_SportCourtBooking.model.Request.RegisterRequest;
-import com.example.BE_SportCourtBooking.model.Response.AccountResponse;
-import com.example.BE_SportCourtBooking.model.Response.EmailDetail;
+import com.example.BE_SportCourtBooking.model.Request.*;
+import com.example.BE_SportCourtBooking.model.Response.*;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.firebase.ErrorCode;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.Email;
 import org.modelmapper.ModelMapper;
@@ -23,7 +26,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 @Service
@@ -85,6 +91,8 @@ public class AuthenticationService implements UserDetailsService {
         }
     }
 
+
+
     public List<Account> getAllAccounts() {
         List<Account> accounts = accountRepository.findAll();
         return accounts;
@@ -108,4 +116,100 @@ public class AuthenticationService implements UserDetailsService {
         }
         return account;
     }
+
+    private String generateRandomPassword(int length) {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder password = new StringBuilder();
+        Random random = new SecureRandom();
+        for (int i = 0; i < length; i++) {
+            password.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return password.toString();
+    }
+
+
+    // send email, set new password for user
+    public ForgotPasswordResponse forgotPassword(ForgotPasswordRequest request) {
+        Account account = accountRepository.findAccountByEmail(request.getEmail());
+        if (account == null) {
+            throw new RuntimeException("Account not found");
+        }
+
+        String newPassword = generateRandomPassword(8);
+        account.setPassword(passwordEncoder.encode(newPassword));
+        accountRepository.save(account);
+
+        // Truyền thêm newPassword vào hàm gửi email
+        emailService.sendEmailForgotPassword(account, newPassword);
+
+        ForgotPasswordResponse response = new ForgotPasswordResponse();
+        response.setMessage("A new password has been sent to your email.");
+        return response;
+    }
+
+    public ChangePasswordResponse changePassword(ChangePasswordRequest request, UUID accountId) {
+        // Lấy account theo ID (hoặc từ security context)
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        // Kiểm tra mật khẩu hiện tại đúng không
+        if (!passwordEncoder.matches(request.getPassword(), account.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        // Kiểm tra newPassword và confirmNewPassword giống nhau không
+        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+            throw new RuntimeException("New passwords do not match");
+        }
+
+        // Cập nhật mật khẩu mới
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        accountRepository.save(account);
+
+        return new ChangePasswordResponse("Password changed successfully");
+    }
+
+    // Adding Google Client ID o day
+    private final GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
+            .setAudience(Collections.singletonList("YOUR_GOOGLE_CLIENT_ID"))
+            .build();
+
+    public GoogleLoginResponse authenticateWithGoogle(GoogleLoginRequest request) {
+        try {
+            GoogleIdToken idToken = verifier.verify(request.getToken());
+            if (idToken == null) {
+                throw new RuntimeException("ID token verification failed");
+            }
+
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+
+            Account account = accountRepository.findAccountByEmail(email);
+            if (account == null) {
+                // Create new account
+                account = new Account();
+                account.setEmail(email);
+                account.setFullName((String) payload.get("name"));
+                account.setPassword(passwordEncoder.encode("12345")); // default password
+                account.setRole(Role.CUSTOMER); // default role
+                account.setIsDelete(false);
+                accountRepository.save(account);
+            }
+
+            if (Boolean.TRUE.equals(account.getIsDelete())) {
+                throw new RuntimeException("Account is marked as deleted");
+            }
+
+            String token = tokenService.generateToken(account);
+
+            return GoogleLoginResponse.builder()
+                    .token(token)
+                    .authenticated(true)
+                    .build();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Google login authentication failed", e);
+        }
+    }
+
 }
