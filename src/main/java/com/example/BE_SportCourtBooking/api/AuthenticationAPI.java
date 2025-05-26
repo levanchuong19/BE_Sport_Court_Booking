@@ -1,6 +1,10 @@
 package com.example.BE_SportCourtBooking.api;
 
 import com.example.BE_SportCourtBooking.entity.Account;
+import com.example.BE_SportCourtBooking.model.Request.LoginRequest;
+import com.example.BE_SportCourtBooking.model.Request.RegisterRequest;
+import com.example.BE_SportCourtBooking.model.Response.AccountResponse;
+import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
 import com.example.BE_SportCourtBooking.model.Request.*;
 import com.example.BE_SportCourtBooking.model.Response.*;
 import com.example.BE_SportCourtBooking.service.AuthenticationService;
@@ -15,7 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/")
+@RequestMapping("/api/auth/")
 @CrossOrigin("*")
 @SecurityRequirement(name="api")
 public class AuthenticationAPI {

@@ -25,16 +25,16 @@ public class TokenService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
     //Tạo ra token
-    public String generateToken(Account account) {
-        return Jwts.builder()
-                .subject(account.getId().toString())
-                .claim("fullName", account.getFullName())
-                .claim("email", account.getEmail())
-                .claim("role", account.getRole())
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 1 day
+    public String generateToken(Account account) { // 1account~ 1token khac nhau
+        String token = Jwts.builder()
+                .subject(account.getId()+ "")//save unique(id ,..) information from user to token
+                .issuedAt(new Date(System.currentTimeMillis()))//10:30
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))//1 day ( 1000 : 1s ) * 60 = 1min
+                //1 day ( 1000 : 1s ) * 60 * 60 = 1h
+                // 1 day ( 1000 : 1s ) * 60 *  60  * 24 = 1day
                 .signWith(getSigninKey())
                 .compact();
+        return token;
     }
 
 

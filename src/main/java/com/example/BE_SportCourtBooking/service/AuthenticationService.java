@@ -56,6 +56,7 @@ public class AuthenticationService implements UserDetailsService {
         Account account = modelMapper.map(registerRequest, Account.class);
         try {
             account.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+            account.setFullName(registerRequest.getFullName());
             account.setRole(Role.CUSTOMER);
             accountRepository.save(account);
             EmailDetail emailDetail = new EmailDetail();

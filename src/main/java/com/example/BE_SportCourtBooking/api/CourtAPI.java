@@ -1,0 +1,175 @@
+package com.example.BE_SportCourtBooking.api;
+
+import com.example.BE_SportCourtBooking.entity.Court;
+import com.example.BE_SportCourtBooking.model.Request.CourtRequest;
+import com.example.BE_SportCourtBooking.model.Request.CourtStatusRequest;
+import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
+import com.example.BE_SportCourtBooking.service.CourtService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+
+@RestController
+@RequestMapping("/api/court/")
+@CrossOrigin("*")
+@SecurityRequirement(name="api")
+public class CourtAPI {
+
+    @Autowired
+    CourtService courtService;
+
+    private ApiResponse createResponse(int code, boolean status, String message, Object data) {
+        return new ApiResponse(code, status, message, data);
+    }
+
+    @PostMapping("create")
+    public ResponseEntity<ApiResponse> createCourt(
+            @Valid @RequestBody CourtRequest courtRequest) {
+        try {
+            return ResponseEntity.ok(createResponse(200, true, "Court created successfully", courtService.createCourt(courtRequest)));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Create Court error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Create Court error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false, "Create Court error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Create Court error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("getAll")
+    public ResponseEntity<ApiResponse> getAllCourts() {
+        try {
+            return ResponseEntity.ok(createResponse(200, true, "Get all courts successfully", courtService.getAllCourts()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, null, "Get all courts error: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("get/{courtId}")
+    public ResponseEntity<ApiResponse> getCourt(UUID courtId) {
+        try {
+            return ResponseEntity.ok(createResponse(200, true, "Get courts successfully", courtService.getCourt(courtId)));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, null, "Get court error: " + e.getMessage()));
+        }
+    }
+
+    @PatchMapping("{courtId}/status")
+    public ResponseEntity<ApiResponse> updateCourtStatus(
+            @PathVariable("courtId") UUID courtId,
+            @Valid @RequestBody CourtStatusRequest statusRequest) {
+        try {
+            return ResponseEntity.ok(createResponse(200, true, "Update Court status successfully", courtService.updateCourtStatus(courtId, statusRequest)));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Update Court status error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Update Court status error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false,  "Update Court status error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Update Court status error",  e.getMessage()));
+        }
+    }
+
+    @PatchMapping("{courtId}/checkIn")
+    public ResponseEntity<ApiResponse> checkInCourt(@PathVariable("courtId") UUID courtId){
+        try {
+            return ResponseEntity.ok(createResponse(200, true, "CheckIn Court successfully", courtService.checkInCourt(courtId)));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "CheckIn Court error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "CheckIn Court error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false,  "CheckIn Court error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "CheckIn Court error",  e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("delete/{courtId}")
+    public ResponseEntity<ApiResponse> deleteCourt(@PathVariable UUID courtId){
+        try{
+            courtService.deleteCourt(courtId);
+            return ResponseEntity.ok(createResponse(200, true, "Delete Court successfully", null));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Delete Court error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Delete Court error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false,  "Delete Court error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Delete Court error",  e.getMessage()));
+        }
+    }
+
+    @PutMapping("update/{courtId}")
+    public ResponseEntity<ApiResponse> updateCourt(
+            @PathVariable UUID courtId,
+            @Valid @RequestBody CourtRequest courtRequest) {
+        try {
+            return ResponseEntity.ok(createResponse(200, true, "Update Court successfully", courtService.updateCourt(courtId, courtRequest)));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Update Court error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Update Court error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false,  "Update Court error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Update Court error",  e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("deleteImage/{courtId}/{imageId}")
+    public ResponseEntity<ApiResponse> deleteImage(
+            @PathVariable UUID courtId,
+            @PathVariable UUID imageId) {
+        try {
+            courtService.deleteImage(courtId, imageId);
+            return ResponseEntity.ok(createResponse(200, true, "Delete Court image successfully", null));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Delete Court image error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Delete Court image error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false,  "Delete Court image error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Delete Court image error",  e.getMessage()));
+        }
+    }
+
+    @GetMapping("{courtId}/getImages")
+    public ResponseEntity<ApiResponse> getImages(@PathVariable UUID courtId) {
+        try {
+            return ResponseEntity.ok(createResponse(200, true, "Get Images Court successfully", courtService.getImagesByCourt(courtId)));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, null, "Get Images Court error: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("{courtId}/images")
+    public ResponseEntity<ApiResponse> addImages(@PathVariable UUID courtId, @RequestBody List<String> newImageUrls) {
+        try{
+        courtService.addImagesToCourt(courtId, newImageUrls);
+        return ResponseEntity.ok(createResponse(200, true, "Add Images to Court successfully", null));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Add Images to Court error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Add Images to Court error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false,  "Add Images to Court error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Add Images to Court error",  e.getMessage()));
+        }
+
+    }
+}
