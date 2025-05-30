@@ -11,9 +11,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.firebase.ErrorCode;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.constraints.Email;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,7 +23,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.List;
@@ -91,8 +88,6 @@ public class AuthenticationService implements UserDetailsService {
         }
     }
 
-
-
     public List<Account> getAllAccounts() {
         List<Account> accounts = accountRepository.findAll();
         return accounts;
@@ -108,6 +103,7 @@ public class AuthenticationService implements UserDetailsService {
         if (account == null) throw new AccountNotFoundException("Account không tồn tại");
         return account;
     }
+
     @Override
     public UserDetails loadUserByUsername(String phone) throws UsernameNotFoundException {
         Account account = accountRepository.findAccountByPhone(phone);
