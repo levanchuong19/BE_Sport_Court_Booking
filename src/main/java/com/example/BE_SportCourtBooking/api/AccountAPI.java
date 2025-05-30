@@ -45,8 +45,8 @@ public class AccountAPI {
     }
 
     @GetMapping("accountDetail/{id}")
-    public ResponseEntity<ApiResponse> getAccountDetail(@PathVariable UUID id){
-        try{
+    public ResponseEntity<ApiResponse> getAccountDetail(@PathVariable UUID id) {
+        try {
             Account account = accountService.getAccount(id);
             ApiResponse response = createResponse(200, true, "Account retrieved successfully", account);
             return ResponseEntity.ok(response);
@@ -57,9 +57,13 @@ public class AccountAPI {
     }
 
     @DeleteMapping("{id}")
-    public  ResponseEntity<Account> delete(@PathVariable UUID id) {
-        Account deletedAccount = accountService.deleteAccount(id);
-
-        return ResponseEntity.ok(deletedAccount);
+    public ResponseEntity<ApiResponse> delete(@PathVariable UUID id) {
+        try {
+            Account deletedAccount = accountService.deleteAccount(id);
+            ApiResponse response = createResponse(200, true, "Account deleted successfully", deletedAccount);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
