@@ -5,14 +5,11 @@ import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
 import com.example.BE_SportCourtBooking.entity.Enum.PriceType;
 import com.example.BE_SportCourtBooking.entity.Image;
-import com.example.BE_SportCourtBooking.model.Request.CourtRequest;
-import jakarta.validation.constraints.NotNull;
 
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 public class CourtResponse {

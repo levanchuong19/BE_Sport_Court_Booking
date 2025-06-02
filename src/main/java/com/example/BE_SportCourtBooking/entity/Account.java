@@ -73,6 +73,7 @@ public class Account implements UserDetails {
     @Column(name = "modified_at")
     Date modifyAt;
 
+
     @Column(name = "is_deleted")
     Boolean isDelete = false;
 
@@ -118,4 +119,8 @@ public class Account implements UserDetails {
     @OneToMany(mappedBy = "courtManager", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Court> courts;
+
+    @OneToMany(mappedBy = "account")
+    @JsonIgnore
+    List<Slot> slots;
 }

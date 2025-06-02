@@ -4,6 +4,7 @@ import com.example.BE_SportCourtBooking.entity.Account;
 import com.example.BE_SportCourtBooking.entity.Court;
 import com.example.BE_SportCourtBooking.entity.CourtPricing;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
+import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
 import com.example.BE_SportCourtBooking.entity.Enum.Role;
 import com.example.BE_SportCourtBooking.entity.Image;
 import com.example.BE_SportCourtBooking.model.Request.CourtRequest;
@@ -16,7 +17,12 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
 import java.sql.Time;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -109,8 +115,13 @@ public class CourtService {
         }
     }
 
-    public List<Court> getAllCourts() {
-        return courtRepository.findAll();
+    public Page<Court> getAllCourts(CourtType courtType, CourtStatus status, String courtName, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return courtRepository.findByFilters(
+                courtType,
+                status,
+                StringUtils.hasText(courtName) ? courtName : null,
+                pageable);
     }
 
     @Transactional
@@ -121,16 +132,7 @@ public class CourtService {
         return modelMapper.map(court, CourtResponse.class);
     }
 
-    @Transactional
-    public CourtResponse checkInCourt(UUID courtID) {
-        Court court = courtRepository.findCourtById(courtID);
-        if(court == null ) throw new EntityNotFoundException("Court not found");
-        if(court.getStatus() != CourtStatus.BOOKED){
-            throw new IllegalArgumentException("Court is not booked, cannot check in");
-        }
-        court.setStatus(CourtStatus.CHECKED_IN);
-        return modelMapper.map(court, CourtResponse.class);
-    }
+
 
     public CourtResponse getCourt(UUID courtID) {
         Court court = courtRepository.findCourtById(courtID);
@@ -141,8 +143,8 @@ public class CourtService {
     public void deleteCourt(UUID courtID){
         Court court = courtRepository.findCourtById(courtID);
         if(court == null) throw new RuntimeException("Court not found");
-        if (court.getStatus() == CourtStatus.IN_USE || court.getStatus() == CourtStatus.BOOKED) {
-            throw new IllegalStateException("Cannot delete court that is currently in use or booked");
+        if (court.getStatus() == CourtStatus.IN_USE ) {
+            throw new IllegalStateException("Cannot delete court that is currently in use");
         }
         court.setIsDelete(true);
         courtRepository.save(court);
