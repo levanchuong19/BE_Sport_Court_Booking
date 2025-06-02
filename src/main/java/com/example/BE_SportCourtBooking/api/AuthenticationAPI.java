@@ -1,20 +1,16 @@
 package com.example.BE_SportCourtBooking.api;
 
 import com.example.BE_SportCourtBooking.entity.Account;
-import com.example.BE_SportCourtBooking.model.Request.LoginRequest;
-import com.example.BE_SportCourtBooking.model.Request.RegisterRequest;
-import com.example.BE_SportCourtBooking.model.Response.AccountResponse;
-import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
 import com.example.BE_SportCourtBooking.model.Request.*;
 import com.example.BE_SportCourtBooking.model.Response.*;
+import com.example.BE_SportCourtBooking.service.AccountService;
 import com.example.BE_SportCourtBooking.service.AuthenticationService;
-import com.example.BE_SportCourtBooking.service.EmailService;
-import com.google.protobuf.Api;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -26,10 +22,12 @@ public class AuthenticationAPI {
     @Autowired
     AuthenticationService authenticationService;
 
+    @Autowired
+    AccountService accountService;
+
     private ApiResponse createResponse(int code, boolean status, String message, Object data) {
         return new ApiResponse(code, status, message, data);
     }
-
     @PostMapping("register")
     public ResponseEntity register (@Valid @RequestBody RegisterRequest registerRequest){
         try {
