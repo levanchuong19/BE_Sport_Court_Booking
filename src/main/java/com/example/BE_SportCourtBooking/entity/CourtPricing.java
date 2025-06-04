@@ -31,11 +31,6 @@ public class CourtPricing {
         @JsonIgnore
         Court court;
 
-//        @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-//        @JoinColumn(name = "slot_id", nullable = false, unique = true)
-//        @JsonIgnore
-//        Slot slot;
-
         @NotNull(message = "Price type is required!")
         @Enumerated(EnumType.STRING)
         @Column(name = "price_type", nullable = false)
@@ -44,6 +39,6 @@ public class CourtPricing {
         @NotNull(message = "Price cannot be null!")
         @Positive(message = "Price must be positive!")
         @Column(name = "price", nullable = false)
-        BigDecimal price;
+        BigDecimal  price;
 }
 

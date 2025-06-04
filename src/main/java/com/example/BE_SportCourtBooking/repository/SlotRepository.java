@@ -9,21 +9,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 public interface SlotRepository extends JpaRepository<Slot, UUID> {
     Slot findSlotById(UUID id);
-//    @Query("SELECT COUNT(s) > 0 FROM Slot s WHERE s.court.id = :courtId " +
-//            "AND s.date = :date " +
-//            "AND ((s.startTime < :endTime AND s.endTime > :startTime))")
-//    boolean existsOverlappingSlot(
-//            @Param("courtId") UUID courtId,
-//            @Param("date") LocalDate date,
-//            @Param("startTime") LocalTime startTime,
-//            @Param("endTime") LocalTime endTime);
-//
+    @Query("SELECT s FROM Slot s WHERE s.bookingStatus = 'PENDING' AND s.createAt <= :timeLimit")
+    List<Slot> findOverdueSlots(@Param("timeLimit") Timestamp timeLimit);
+
     @Query("SELECT c FROM Slot c WHERE " +
             "(:status IS NULL OR c.status = :status) AND " +
             "(:slotType IS NULL OR c.slotType = :slotType)")
@@ -41,7 +36,5 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
                                   @Param("endDate") LocalDate endDate,
                                   @Param("startTime") String startTime,
                                   @Param("endTime") String endTime);
-
-
 
 }

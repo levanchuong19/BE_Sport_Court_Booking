@@ -6,6 +6,7 @@ import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
 import com.example.BE_SportCourtBooking.entity.Enum.PriceType;
 import com.example.BE_SportCourtBooking.entity.Image;
 
+import com.example.BE_SportCourtBooking.entity.Slot;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -22,11 +23,9 @@ public class CourtResponse {
     String openTime;
     String closeTime;
     Account courtManager;
-
-
     List<CourtResponse.PriceResponse> prices;
-
     List<Image> images;
+    List<Slot> slots;
 
     @Data
     public static class PriceResponse{

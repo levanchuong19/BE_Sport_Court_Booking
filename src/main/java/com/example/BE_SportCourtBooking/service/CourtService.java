@@ -7,6 +7,7 @@ import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
 import com.example.BE_SportCourtBooking.entity.Enum.Role;
 import com.example.BE_SportCourtBooking.entity.Image;
+import com.example.BE_SportCourtBooking.model.Request.CourtPricingRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtStatusRequest;
 import com.example.BE_SportCourtBooking.model.Response.CourtResponse;
@@ -202,6 +203,35 @@ public class CourtService {
 
         return modelMapper.map(court, CourtResponse.class);
     }
+
+    public CourtResponse updateCourtPrice(UUID courtId, List<CourtPricingRequest> newPrices) {
+        Court court = courtRepository.findCourtById(courtId);
+        if (court == null) {
+            throw new EntityNotFoundException("Court not found");
+        }
+        if (newPrices == null || newPrices.isEmpty()) {
+            throw new IllegalArgumentException("Prices cannot be null or empty");
+        }
+        List<CourtPricing> existingPrices = court.getPrices();
+        for (CourtPricingRequest request : newPrices) {
+            Optional<CourtPricing> existing = existingPrices.stream()
+                    .filter(p -> p.getPriceType().equals(request.getPriceType()))
+                    .findFirst();
+
+            if (existing.isPresent()) {
+                existing.get().setPrice(request.getPrice());
+            } else {
+                CourtPricing newPricing = new CourtPricing();
+                newPricing.setCourt(court);
+                newPricing.setPriceType(request.getPriceType());
+                newPricing.setPrice(request.getPrice());
+                existingPrices.add(newPricing);
+            }
+        }
+        Court updatedCourt = courtRepository.save(court);
+        return modelMapper.map(updatedCourt, CourtResponse.class);
+    }
+
 
     public void deleteImage(UUID courtId, UUID imageId) {
         Court court = courtRepository.findCourtById(courtId);

@@ -1,8 +1,10 @@
 package com.example.BE_SportCourtBooking.api;
 
 import com.example.BE_SportCourtBooking.entity.Court;
+import com.example.BE_SportCourtBooking.entity.CourtPricing;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
+import com.example.BE_SportCourtBooking.model.Request.CourtPricingRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtStatusRequest;
 import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
@@ -56,6 +58,7 @@ public class CourtAPI {
                                                     @RequestParam(defaultValue = "10") int size)  {
         try {
             Page<Court> courts = courtService.getAllCourts(courtType, status, courtName, page, size);
+
             return ResponseEntity.ok(createResponse(200, true, "Get all courts successfully", courts));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(createResponse(500, false, null, "Get all courts error: " + e.getMessage()));
@@ -84,6 +87,25 @@ public class CourtAPI {
         } catch (IllegalStateException e) {
             return ResponseEntity.status(403).body(createResponse(403, false,  "Update Court status error", e.getMessage()));
         } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Update Court status error",  e.getMessage()));
+        }
+    }
+
+    @PatchMapping("{courtId}/price")
+    public ResponseEntity<ApiResponse> updateCourtPrice(
+            @PathVariable("courtId") UUID courtId,
+            @Valid @RequestBody List<@Valid CourtPricingRequest> priceRequests) {
+        try {
+            return ResponseEntity.ok(createResponse(200, true, "Update Court status successfully", courtService.updateCourtPrice(courtId, priceRequests)));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Update Court status error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Update Court status error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false,  "Update Court status error", e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(500).body(createResponse(500, false, "Update Court status error",  e.getMessage()));
         }
     }

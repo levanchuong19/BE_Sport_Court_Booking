@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/booking/")
+@RequestMapping("/api/slot/")
 @CrossOrigin("*")
 @SecurityRequirement(name="api")
-public class BookingAPI {
+public class BookingSlotAPI {
 
     @Autowired
     SlotService slotService;
@@ -32,15 +32,18 @@ public class BookingAPI {
     @PostMapping("create")
     public ResponseEntity<ApiResponse> createSlot(@Valid @RequestBody SlotRequest slotRequest) {
         try {
-            slotService.createSlot(slotRequest);
-            return ResponseEntity.ok(createResponse(200, true, "Created booking successfully", null));
+            return ResponseEntity.ok(createResponse(200, true, "Created booking successfully", slotService.createSlot(slotRequest)));
         } catch (EntityNotFoundException e) {
+            e.printStackTrace();
             return ResponseEntity.status(404).body(createResponse(404, false, "Create booking error", e.getMessage()));
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(createResponse(400, false, "Create booking error", e.getMessage()));
         } catch (IllegalStateException e) {
+            e.printStackTrace();
             return ResponseEntity.status(403).body(createResponse(403, false, "Create booking error", e.getMessage()));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(500).body(createResponse(500, false, "Create booking error", e.getMessage()));
         }
     }
@@ -95,6 +98,23 @@ public class BookingAPI {
             return ResponseEntity.status(403).body(createResponse(403, false, "Delete slot error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(createResponse(500, false, "Delete slot error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("transaction/{slotId}")
+    public ResponseEntity<ApiResponse> createTransaction(@PathVariable UUID slotId) {
+        try {
+            slotService.createTransaction(slotId);
+            return ResponseEntity.ok(createResponse(200, true, "Create transaction successfully", null));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Create transaction error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Create transaction error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false, "Create transaction error", e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(createResponse(500, false, "Create transaction error", e.getMessage()));
         }
     }
 }

@@ -1,4 +1,5 @@
 package com.example.BE_SportCourtBooking.entity;
+import com.example.BE_SportCourtBooking.entity.Enum.BookingStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.PriceType;
 import com.example.BE_SportCourtBooking.entity.Enum.SlotStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -9,8 +10,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Date;
 import java.util.UUID;
 
 @Entity
@@ -32,6 +35,10 @@ public class Slot {
     @JsonIgnore
     Court court;
 
+    @Column(name = "create_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createAt;
+
     @NotNull
     LocalDate startDate;
 
@@ -50,7 +57,6 @@ public class Slot {
             message = "End time must be in HH:mm or HH:mm:ss format!")
     String endTime;
 
-
     @NotNull(message = "Slot type is required!")
     @Enumerated(EnumType.STRING)
     @Column(name = "slot_type", nullable = false)
@@ -60,5 +66,10 @@ public class Slot {
     @Enumerated(EnumType.STRING)
     SlotStatus status;
 
+    @Enumerated(EnumType.STRING)
+    BookingStatus bookingStatus ;
+
+    @Column(name = "price")
+    BigDecimal price;
 
 }
