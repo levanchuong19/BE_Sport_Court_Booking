@@ -39,6 +39,6 @@ public class CourtPricing {
         @NotNull(message = "Price cannot be null!")
         @Positive(message = "Price must be positive!")
         @Column(name = "price", nullable = false)
-        BigDecimal price;
+        BigDecimal  price;
 }
 

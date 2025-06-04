@@ -34,7 +34,7 @@ public class Court {
 
     @NotNull(message = "Court name cannot be null!")
     @NotBlank(message = "Court name cannot be blank!")
-    @Column(name = "fullName", nullable = false)
+    @Column(name = "courtName", nullable = false)
     String courtName;
 
     @NotBlank(message = "Location cannot be blank!")
@@ -67,6 +67,9 @@ public class Court {
     @JoinColumn(name = "manager_id", nullable = false)
     @NotNull(message = "Court must have a manager account!")
     Account courtManager;
+
+    @OneToMany(mappedBy = "court", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Slot> slots;
 
     @OneToMany(mappedBy = "court", cascade = CascadeType.ALL, orphanRemoval = true)
     List<CourtPricing> prices;

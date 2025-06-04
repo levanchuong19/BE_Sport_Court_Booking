@@ -1,15 +1,19 @@
 package com.example.BE_SportCourtBooking.api;
 
 import com.example.BE_SportCourtBooking.entity.Court;
+import com.example.BE_SportCourtBooking.entity.CourtPricing;
+import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
+import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
+import com.example.BE_SportCourtBooking.model.Request.CourtPricingRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtStatusRequest;
 import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
 import com.example.BE_SportCourtBooking.service.CourtService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,9 +51,15 @@ public class CourtAPI {
     }
 
     @GetMapping("getAll")
-    public ResponseEntity<ApiResponse> getAllCourts() {
+    public ResponseEntity<ApiResponse> getAllCourts(@RequestParam(required = false) CourtType courtType,
+                                                    @RequestParam(required = false) CourtStatus status,
+                                                    @RequestParam(required = false) String courtName,
+                                                    @RequestParam(defaultValue = "0") int page,
+                                                    @RequestParam(defaultValue = "10") int size)  {
         try {
-            return ResponseEntity.ok(createResponse(200, true, "Get all courts successfully", courtService.getAllCourts()));
+            Page<Court> courts = courtService.getAllCourts(courtType, status, courtName, page, size);
+
+            return ResponseEntity.ok(createResponse(200, true, "Get all courts successfully", courts));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(createResponse(500, false, null, "Get all courts error: " + e.getMessage()));
         }
@@ -81,20 +91,25 @@ public class CourtAPI {
         }
     }
 
-    @PatchMapping("{courtId}/checkIn")
-    public ResponseEntity<ApiResponse> checkInCourt(@PathVariable("courtId") UUID courtId){
+    @PatchMapping("{courtId}/price")
+    public ResponseEntity<ApiResponse> updateCourtPrice(
+            @PathVariable("courtId") UUID courtId,
+            @Valid @RequestBody List<@Valid CourtPricingRequest> priceRequests) {
         try {
-            return ResponseEntity.ok(createResponse(200, true, "CheckIn Court successfully", courtService.checkInCourt(courtId)));
+            return ResponseEntity.ok(createResponse(200, true, "Update Court status successfully", courtService.updateCourtPrice(courtId, priceRequests)));
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(404).body(createResponse(404, false, "CheckIn Court error", e.getMessage()));
+            return ResponseEntity.status(404).body(createResponse(404, false, "Update Court status error", e.getMessage()));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(createResponse(400, false, "CheckIn Court error", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Update Court status error", e.getMessage()));
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(403).body(createResponse(403, false,  "CheckIn Court error", e.getMessage()));
+            return ResponseEntity.status(403).body(createResponse(403, false,  "Update Court status error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(createResponse(500, false, "CheckIn Court error",  e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(createResponse(500, false, "Update Court status error",  e.getMessage()));
         }
     }
+
 
     @DeleteMapping("delete/{courtId}")
     public ResponseEntity<ApiResponse> deleteCourt(@PathVariable UUID courtId){

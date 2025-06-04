@@ -23,7 +23,7 @@ public class Image {
     UUID id;
 
     @NotBlank(message = "Image URL cannot be blank!")
-    @Column(name = "image_path", nullable = false)
+    @Column(name = "imageUrl", nullable = false)
     String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)

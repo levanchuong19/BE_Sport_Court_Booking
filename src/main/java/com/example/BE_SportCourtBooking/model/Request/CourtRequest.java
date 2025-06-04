@@ -42,11 +42,10 @@ public class CourtRequest {
             message = "Close time must be in HH:mm or HH:mm:ss format!")
     String closeTime;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "manager_id", nullable = false)
     @NotNull(message = "Court must have a manager account!")
     UUID manager_id;
 
+    @NotNull(message = "Please provide at least one price!")
     List<PriceRequest> prices;
 
     List<String> images;

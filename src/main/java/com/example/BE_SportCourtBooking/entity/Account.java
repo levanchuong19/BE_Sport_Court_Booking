@@ -14,6 +14,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 @Entity
@@ -73,8 +74,12 @@ public class Account implements UserDetails {
     @Column(name = "modified_at")
     Date modifyAt;
 
+
     @Column(name = "is_deleted")
     Boolean isDelete = false;
+
+    @Column(name = "balance")
+    BigDecimal balance = BigDecimal.ZERO;
 
     @JsonIgnore
     @Override
@@ -118,4 +123,10 @@ public class Account implements UserDetails {
     @OneToMany(mappedBy = "courtManager", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Court> courts;
+
+    @OneToMany(mappedBy = "account")
+    @JsonIgnore
+    List<Slot> slots;
+
+
 }
