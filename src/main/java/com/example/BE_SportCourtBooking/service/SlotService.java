@@ -204,9 +204,8 @@ public class SlotService {
         BigDecimal amount = slot.getPrice().multiply(new BigDecimal("100"));//khử thập phân theo VNPay's requirement
         String amountStr = amount.setScale(0, RoundingMode.HALF_UP).toPlainString();//ép về định dạng 0 dấu thập phân và ép về string để xóa dấu . thập phân
 
-        String tmnCode = "GVOIN1TF";
-      String secretKey = "JE6NKK6CJRA7V35NCRU3RS2RCFTSJGH3";
-//        String secretKey ="1WCTW3XG2CKY1KSR66UM5I6P1RFJI6LZ"; // Your VNPay secret key
+        String tmnCode = "4OBLXBGN"; // Your VNPay TmnCode
+        String secretKey ="GJ8L3JFZNEC4ICPDZUMGJKKN2H5WORXK"; // Your VNPay secret key
         String vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
         String returnUrl = "http://localhost:5173/success?bookingID=" + slot.getId();//trang thong bao thanh cong o Front End
         String currCode = "VND";

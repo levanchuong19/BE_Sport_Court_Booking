@@ -1,7 +1,6 @@
 package com.example.BE_SportCourtBooking.api;
 
 import com.example.BE_SportCourtBooking.entity.Court;
-import com.example.BE_SportCourtBooking.entity.CourtPricing;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
 import com.example.BE_SportCourtBooking.model.Request.CourtPricingRequest;
@@ -100,12 +99,10 @@ public class CourtAPI {
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(404).body(createResponse(404, false, "Update Court status error", e.getMessage()));
         } catch (IllegalArgumentException e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().body(createResponse(400, false, "Update Court status error", e.getMessage()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(403).body(createResponse(403, false,  "Update Court status error", e.getMessage()));
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(500).body(createResponse(500, false, "Update Court status error",  e.getMessage()));
         }
     }
