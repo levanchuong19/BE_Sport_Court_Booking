@@ -34,16 +34,12 @@ public class BookingSlotAPI {
         try {
             return ResponseEntity.ok(createResponse(200, true, "Created booking successfully", slotService.createSlot(slotRequest)));
         } catch (EntityNotFoundException e) {
-            e.printStackTrace();
             return ResponseEntity.status(404).body(createResponse(404, false, "Create booking error", e.getMessage()));
         } catch (IllegalArgumentException e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().body(createResponse(400, false, "Create booking error", e.getMessage()));
         } catch (IllegalStateException e) {
-            e.printStackTrace();
             return ResponseEntity.status(403).body(createResponse(403, false, "Create booking error", e.getMessage()));
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(500).body(createResponse(500, false, "Create booking error", e.getMessage()));
         }
     }
@@ -113,7 +109,6 @@ public class BookingSlotAPI {
         } catch (IllegalStateException e) {
             return ResponseEntity.status(403).body(createResponse(403, false, "Create transaction error", e.getMessage()));
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(500).body(createResponse(500, false, "Create transaction error", e.getMessage()));
         }
     }
