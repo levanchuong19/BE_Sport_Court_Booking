@@ -6,17 +6,21 @@ import com.example.BE_SportCourtBooking.model.Request.UpdateAccountRequest;
 import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
 import com.example.BE_SportCourtBooking.model.Response.GetAccountResponse;
 import com.example.BE_SportCourtBooking.service.AccountService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
+@PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/api/account")
 @CrossOrigin("*")
+@SecurityRequirement(name="api")
 public class AccountAPI {
     @Autowired
     AccountService accountService;

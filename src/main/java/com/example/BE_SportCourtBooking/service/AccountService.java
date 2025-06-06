@@ -9,7 +9,9 @@ import com.example.BE_SportCourtBooking.model.Response.GetAccountResponse;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -21,12 +23,17 @@ public class AccountService {
     @Autowired
     AccountRepository accountRepository;
 
+    @Autowired
+    @Lazy
+    PasswordEncoder passwordEncoder;
+
     ModelMapper modelMapper = new ModelMapper();
 
     public Account createAccount(NewAccountRequest newAccountRequest) {
         Account account = modelMapper.map(newAccountRequest, Account.class);
 
         try {
+            account.setPassword(passwordEncoder.encode(newAccountRequest.getPassword()));
             return accountRepository.save(account);
         } catch (Exception e) {
             throw new DuplicateEntity("Duplicate account id!");
@@ -49,7 +56,7 @@ public class AccountService {
         List<Account> accounts = accountRepository.findAll();
         List<GetAccountResponse> mapAccoutList = new ArrayList<>();
 
-        for(Account account : accounts) {
+        for (Account account : accounts) {
             GetAccountResponse getAccountResponse = new GetAccountResponse();
             getAccountResponse.setFullName(account.getFullName());
             getAccountResponse.setEmail(account.getEmail());
@@ -71,7 +78,7 @@ public class AccountService {
 
         account.setIsDelete(true);
 
-        return  accountRepository.save(account);
+        return accountRepository.save(account);
     }
 
     public Account getCurrentAccount() {
