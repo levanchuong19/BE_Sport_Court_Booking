@@ -1,4 +1,5 @@
 package com.example.BE_SportCourtBooking.repository;
+
 import com.example.BE_SportCourtBooking.entity.Court;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
@@ -8,10 +9,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface CourtRepository extends JpaRepository<Court, UUID> {
     Court findCourtById(UUID id);
+
     @Query("SELECT c FROM Court c WHERE " +
             "(:courtType IS NULL OR c.courtType = :courtType) AND " +
             "(:status IS NULL OR c.status = :status) AND " +
@@ -23,4 +26,14 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
             Pageable pageable);
 //    Court findCourtByName(String name);
 //    Court findCourtByAddress(String address);
+
+    @Query("SELECT COUNT(c) FROM Court c")
+    Long countAllCourts();
+
+    @Query("SELECT c.status, COUNT(c) FROM Court c WHERE c.isDelete = false GROUP BY c.status")
+    List<Object[]> countGroupByStatus();
+
+    @Query("SELECT c.courtType, COUNT(c) FROM Court c WHERE c.isDelete = false GROUP BY c.courtType")
+    List<Object[]> countGroupByType();
+
 }

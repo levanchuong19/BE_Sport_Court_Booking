@@ -76,7 +76,8 @@ public class Filter extends OncePerRequestFilter {
             "/api/auth/register",
             "/api/forgot-password",
             "api/change-password",
-            "/websocket/**"
+            "/websocket/**",
+            "/api/account"
     );
 
     public boolean checkIsPublicAPI(String uri) {
