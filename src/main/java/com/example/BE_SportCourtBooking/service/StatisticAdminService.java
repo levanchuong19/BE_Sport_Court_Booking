@@ -104,36 +104,6 @@ public class StatisticAdminService {
         }
     }
 
-    public Map<String, Long> getPaidBookingCountsSummary() {
-        try {
-            Map<String, Long> result = new LinkedHashMap<>();
-
-            result.put("total", slotRepository.countTotalPaidBookings());
-            result.put("today", slotRepository.countPaidBookingsToday());
-            result.put("thisWeek", slotRepository.countPaidBookingsThisWeek());
-            result.put("thisMonth", slotRepository.countPaidBookingsThisMonth());
-
-            return result;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get paid booking counts summary", e);
-        }
-    }
-
-    public Map<String, BigDecimal> getRevenueSummaryAllCourts() {
-        try {
-            Map<String, BigDecimal> result = new LinkedHashMap<>();
-
-            result.put("total", slotRepository.totalRevenueAllCourt());
-            result.put("today", slotRepository.revenueTodayAllCourt());
-            result.put("thisWeek", slotRepository.revenueThisWeekAllCourt());
-            result.put("thisMonth", slotRepository.revenueThisMonthAllCourt());
-
-            return result;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get revenue summary", e);
-        }
-    }
-
     public Map<String, Long> getBookingStatusCounts() {
         try {
             Map<String, Long> result = new LinkedHashMap<>();
@@ -145,6 +115,57 @@ public class StatisticAdminService {
             return result;
         } catch (Exception e) {
             throw new RuntimeException("Failed to get booking status counts", e);
+        }
+    }
+
+    public Map<String, Long> getPaidBookingsPerDayThisWeek() {
+        try {
+            Map<String, Long> result = new LinkedHashMap<>();
+            List<Object[]> records = slotRepository.countPaidBookingsPerDayThisWeek();
+
+            for (Object[] record : records) {
+                String date = record[0].toString();
+                Long total = ((Number) record[1]).longValue();
+                result.put(date, total);
+            }
+
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get paid bookings per day this week", e);
+        }
+    }
+
+    public Map<String, Long> getPaidBookingsPerDayThisMonth() {
+        try {
+            Map<String, Long> result = new LinkedHashMap<>();
+            List<Object[]> records = slotRepository.countPaidBookingsPerDayThisMonth();
+
+            for (Object[] record : records) {
+                String date = record[0].toString(); // bookingDate dạng "yyyy-MM-dd"
+                Long total = ((Number) record[1]).longValue(); // total số booking
+                result.put(date, total);
+            }
+
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get paid bookings per day this month", e);
+        }
+    }
+
+    public Map<String, BigDecimal> getRevenueThisMonthGroupByCourtType() {
+        try {
+            Map<String, BigDecimal> result = new LinkedHashMap<>();
+            List<Object[]> records = slotRepository.revenueThisMonthGroupByCourtType();
+
+            for (Object[] record : records) {
+                String courtType = (String) record[0];
+                BigDecimal revenue = (record[1] != null) ? (BigDecimal) record[1] : BigDecimal.ZERO;
+                result.put(courtType, revenue);
+            }
+
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get revenue grouped by court type for this month", e);
         }
     }
 

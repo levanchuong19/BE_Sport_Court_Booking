@@ -39,29 +39,41 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
                                   @Param("startTime") String startTime,
                                   @Param("endTime") String endTime);
 
-    @Query("SELECT COUNT(s) FROM Slot s WHERE s.bookingStatus = 'PAID'")
-    Long countTotalPaidBookings();
+    @Query("SELECT FUNCTION('DATE', s.startDate) AS bookingDate, COUNT(s) AS total " +
+            "FROM Slot s " +
+            "WHERE s.bookingStatus = 'PAID' " +
+            "AND FUNCTION('YEARWEEK', s.startDate, 1) = FUNCTION('YEARWEEK', CURRENT_DATE, 1) " +
+            "GROUP BY FUNCTION('DATE', s.startDate) " +
+            "ORDER BY bookingDate")
+    List<Object[]> countPaidBookingsPerDayThisWeek();
 
-    @Query("SELECT COUNT(s) FROM Slot s WHERE s.bookingStatus = 'PAID' AND s.startDate = CURRENT_DATE")
-    Long countPaidBookingsToday();
+    @Query(value = "SELECT DATE(s.startDate) AS bookingDate, COUNT(*) AS total " +
+            "FROM slot s " +
+            "WHERE s.bookingStatus = 'PAID' " +
+            "AND YEAR(s.startDate) = YEAR(CURRENT_DATE) " +
+            "AND MONTH(s.startDate) = MONTH(CURRENT_DATE) " +
+            "GROUP BY DATE(s.startDate) " +
+            "ORDER BY bookingDate", nativeQuery = true)
+    List<Object[]> countPaidBookingsPerDayThisMonth();
 
-    @Query("SELECT COUNT(s) FROM Slot s WHERE s.bookingStatus = 'PAID' AND FUNCTION('YEARWEEK', s.startDate, 1) = FUNCTION('YEARWEEK', CURRENT_DATE, 1)")
-    Long countPaidBookingsThisWeek();
 
-    @Query("SELECT COUNT(s) FROM Slot s WHERE s.bookingStatus = 'PAID' AND FUNCTION('YEAR', s.startDate) = FUNCTION('YEAR', CURRENT_DATE) AND FUNCTION('MONTH', s.startDate) = FUNCTION('MONTH', CURRENT_DATE)")
-    Long countPaidBookingsThisMonth();
+//    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s WHERE s.bookingStatus = 'PAID'")
+//    BigDecimal totalRevenueAllCourt();
+//
+//    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s WHERE s.bookingStatus = 'PAID' AND s.startDate = CURRENT_DATE")
+//    BigDecimal revenueTodayAllCourt();
+//
+//    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s WHERE s.bookingStatus = 'PAID' AND FUNCTION('YEARWEEK', s.startDate, 1) = FUNCTION('YEARWEEK', CURRENT_DATE, 1)")
+//    BigDecimal revenueThisWeekAllCourt();
 
-    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s WHERE s.bookingStatus = 'PAID'")
-    BigDecimal totalRevenueAllCourt();
-
-    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s WHERE s.bookingStatus = 'PAID' AND s.startDate = CURRENT_DATE")
-    BigDecimal revenueTodayAllCourt();
-
-    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s WHERE s.bookingStatus = 'PAID' AND FUNCTION('YEARWEEK', s.startDate, 1) = FUNCTION('YEARWEEK', CURRENT_DATE, 1)")
-    BigDecimal revenueThisWeekAllCourt();
-
-    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s WHERE s.bookingStatus = 'PAID' AND FUNCTION('YEAR', s.startDate) = FUNCTION('YEAR', CURRENT_DATE) AND FUNCTION('MONTH', s.startDate) = FUNCTION('MONTH', CURRENT_DATE)")
-    BigDecimal revenueThisMonthAllCourt();
+    @Query("SELECT c.courtType, COALESCE(SUM(s.price), 0) " +
+            "FROM Slot s JOIN s.court c " +
+            "WHERE s.bookingStatus = 'PAID' " +
+            "AND FUNCTION('YEAR', s.startDate) = FUNCTION('YEAR', CURRENT_DATE) " +
+            "AND FUNCTION('MONTH', s.startDate) = FUNCTION('MONTH', CURRENT_DATE) " +
+            "GROUP BY c.courtType " +
+            "ORDER BY c.courtType")
+    List<Object[]> revenueThisMonthGroupByCourtType();
 
     @Query("SELECT COUNT(s) FROM Slot s WHERE s.bookingStatus = 'CANCELLED'")
     Long countCancelledBookings();

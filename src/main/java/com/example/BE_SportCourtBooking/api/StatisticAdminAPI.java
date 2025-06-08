@@ -59,22 +59,30 @@ public class StatisticAdminAPI {
         return ResponseEntity.ok(list);
     }
 
-    @GetMapping("/paid-bookings-summary")
-    public ResponseEntity<Map<String, Long>> getPaidBookingsSummary() {
-        Map<String, Long> result = statisticAdminService.getPaidBookingCountsSummary();
-
-        return ResponseEntity.ok(result);
-    }
-
-    @GetMapping("/revenue-allCourts-summary")
-    public ResponseEntity<Map<String, BigDecimal>> getRevenueAllCourtsSummary() {
-        Map<String, BigDecimal> revenueSummary = statisticAdminService.getRevenueSummaryAllCourts();
-        return ResponseEntity.ok(revenueSummary);
-    }
-
     @GetMapping("/booking-status-counts")
     public ResponseEntity<Map<String, Long>> getBookingStatusCounts() {
         Map<String, Long> counts = statisticAdminService.getBookingStatusCounts();
         return ResponseEntity.ok(counts);
+    }
+
+    @GetMapping("/booking-this-week")
+    public ResponseEntity<Map<String, Long>> getBookingThisWeek() {
+        Map<String, Long> counts = statisticAdminService.getPaidBookingsPerDayThisWeek();
+
+        return ResponseEntity.ok(counts);
+    }
+
+    @GetMapping("/booking-this-month")
+    public ResponseEntity<Map<String, Long>> getBookingThisMonth() {
+        Map<String, Long> counts = statisticAdminService.getPaidBookingsPerDayThisMonth();
+
+        return ResponseEntity.ok(counts);
+    }
+
+    @GetMapping("/revenue-this-month-eachCourt")
+    public ResponseEntity<Map<String, BigDecimal>> getRevenueThisMonthCourtType() {
+        Map<String, BigDecimal> sum = statisticAdminService.getRevenueThisMonthGroupByCourtType();
+
+        return ResponseEntity.ok(sum);
     }
 }
