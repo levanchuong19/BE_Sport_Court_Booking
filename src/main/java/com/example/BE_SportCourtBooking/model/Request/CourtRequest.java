@@ -24,23 +24,10 @@ public class CourtRequest {
     @Column(name = "fullName", nullable = false)
     String courtName;
 
-    @NotBlank(message = "Location cannot be blank!")
-    @Column(name = "location", nullable = false)
-    String location;
-
     @NotBlank(message = "Description cannot be blank!")
     @Column(name = "description", nullable = false)
     String description;
 
-    @NotBlank(message = "Open time cannot be blank!")
-    @Pattern(regexp = "^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$",
-            message = "Open time must be in HH:mm or HH:mm:ss format!")
-    String openTime;
-
-    @NotBlank(message = "Close time cannot be blank!")
-    @Pattern(regexp = "^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$",
-            message = "Close time must be in HH:mm or HH:mm:ss format!")
-    String closeTime;
 
     @NotNull(message = "Court must have a manager account!")
     UUID manager_id;
@@ -49,6 +36,25 @@ public class CourtRequest {
     List<PriceRequest> prices;
 
     List<String> images;
+
+    @NotNull(message = "Business Location Id is required!")
+    UUID businessLocationId;
+
+    @NotNull(message = "Construction year cannot be null!")
+    @Column(name = "construction_year")
+    Integer yearBuild;
+
+    @NotNull(message = "Length cannot be null!")
+    @Column(name = "length")
+    Double length;
+
+    @NotNull(message = "Width cannot be null!")
+    @Column(name = "width")
+    Double width;
+
+    @NotNull(message = "Maximum number of players cannot be null!")
+    @Column(name = "max_players")
+    Integer maxPlayers;
 
     @Data
     public static class PriceRequest {

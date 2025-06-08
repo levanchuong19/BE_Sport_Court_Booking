@@ -47,10 +47,11 @@ public class BookingSlotAPI {
     @GetMapping("getAll")
     public ResponseEntity<ApiResponse> getAllSlots(@RequestParam(required = false) PriceType slotType,
                                                    @RequestParam(required = false)SlotStatus slotStatus,
+                                                   @RequestParam(required = false) Boolean isDelete,
                                                    @RequestParam(defaultValue = "0") int page,
                                                    @RequestParam(defaultValue = "10") int size)  {
         try {
-            Page<Slot> slot = slotService.getAllSlot(slotType,slotStatus, page, size);
+            Page<Slot> slot = slotService.getAllSlot(slotType,slotStatus,isDelete, page, size);
             return ResponseEntity.ok(createResponse(200, true, "Get all slot successfully", slot));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(createResponse(500, false, null, "Get all slot error: " + e.getMessage()));

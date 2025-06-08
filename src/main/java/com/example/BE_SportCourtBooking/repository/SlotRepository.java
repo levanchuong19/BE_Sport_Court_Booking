@@ -23,10 +23,12 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
 
     @Query("SELECT c FROM Slot c WHERE " +
             "(:status IS NULL OR c.status = :status) AND " +
+            "(:isDelete IS NULL OR c.isDelete = :isDelete) AND " +
             "(:slotType IS NULL OR c.slotType = :slotType)")
     Page<Slot> findByFilters(
             @Param("slotType") PriceType slotType,
             @Param("status") SlotStatus status,
+            @Param("isDelete") Boolean isDelete,
             Pageable pageable);
 
     @Query("SELECT COUNT(s) > 0 FROM Slot s WHERE s.court.id = :courtId AND s.slotType = :slotType "
