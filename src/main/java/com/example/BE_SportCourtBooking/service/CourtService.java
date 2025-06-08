@@ -1,17 +1,15 @@
 package com.example.BE_SportCourtBooking.service;
 
-import com.example.BE_SportCourtBooking.entity.Account;
-import com.example.BE_SportCourtBooking.entity.Court;
-import com.example.BE_SportCourtBooking.entity.CourtPricing;
+import com.example.BE_SportCourtBooking.entity.*;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
 import com.example.BE_SportCourtBooking.entity.Enum.Role;
-import com.example.BE_SportCourtBooking.entity.Image;
 import com.example.BE_SportCourtBooking.model.Request.CourtPricingRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtStatusRequest;
 import com.example.BE_SportCourtBooking.model.Response.CourtResponse;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
+import com.example.BE_SportCourtBooking.repository.BusinessLocationRepo;
 import com.example.BE_SportCourtBooking.repository.CourtRepository;
 import com.example.BE_SportCourtBooking.repository.ImageRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -28,6 +26,7 @@ import java.sql.Time;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,6 +47,9 @@ public class CourtService {
     @Autowired
     ImageRepository imageRepository;
 
+    @Autowired
+    BusinessLocationRepo businessLocationRepository;
+
     public CourtResponse createCourt(CourtRequest courtRequest) {
         try {
             if (courtRequest.getPrices() == null || courtRequest.getPrices().isEmpty()) {
@@ -59,32 +61,20 @@ public class CourtService {
             if (account.getRole() != Role.ADMIN && account.getRole() != Role.MANAGER) {
                 throw new IllegalArgumentException("Account is not a manager or admin");
             }
+
+            BusinessLocation businessLocation = businessLocationRepository.findBusinessLocationById(courtRequest.getBusinessLocationId());
+            if( businessLocation == null) {
+                throw new EntityNotFoundException("Business Location not found");
+            }
             Court court = new Court();
             court.setCourtType(courtRequest.getCourtType());
             court.setCourtName(courtRequest.getCourtName());
-            court.setLocation(courtRequest.getLocation());
+            court.setBusinessLocation(businessLocation);
+            court.setYearBuild(courtRequest.getYearBuild());
+            court.setLength(courtRequest.getLength());
+            court.setWidth(courtRequest.getWidth());
+            court.setMaxPlayers(courtRequest.getMaxPlayers());
             court.setDescription(courtRequest.getDescription());
-            try {
-                // Chuẩn hóa định dạng: thêm ":00" nếu chỉ có HH:mm
-                String openTimeStr = courtRequest.getOpenTime().length() == 5 ? courtRequest.getOpenTime() + ":00" : courtRequest.getOpenTime();
-                String closeTimeStr = courtRequest.getCloseTime().length() == 5 ? courtRequest.getCloseTime() + ":00" : courtRequest.getCloseTime();
-
-                // Parse chuỗi thành LocalTime
-                DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-                LocalTime openLocalTime = LocalTime.parse(openTimeStr, timeFormatter);
-                LocalTime closeLocalTime = LocalTime.parse(closeTimeStr, timeFormatter);
-
-                // Kiểm tra openTime < closeTime
-                if (!openLocalTime.isBefore(closeLocalTime)) {
-                    throw new IllegalArgumentException("Open time must be before close time!");
-                }
-
-                // Chuyển LocalTime sang java.sql.Time
-                court.setOpenTime(String.valueOf(Time.valueOf(openLocalTime)));
-                court.setCloseTime(String.valueOf(Time.valueOf(closeLocalTime)));
-            } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException("Invalid time format for openTime or closeTime. Use HH:mm or HH:mm:ss.");
-            }
             court.setCourtManager(account);
             court.setStatus(CourtStatus.INACTIVE);
 
@@ -112,16 +102,18 @@ public class CourtService {
 
            return modelMapper.map(courtRepository.save(court), CourtResponse.class);
         }   catch (RuntimeException e) {
+            e.printStackTrace();
             throw new EntityNotFoundException("Create court error", e);
         }
     }
 
-    public Page<Court> getAllCourts(CourtType courtType, CourtStatus status, String courtName, int page, int size) {
+    public Page<Court> getAllCourts(CourtType courtType, CourtStatus status, String courtName,Boolean isDelete, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return courtRepository.findByFilters(
                 courtType,
                 status,
                 StringUtils.hasText(courtName) ? courtName : null,
+                isDelete,
                 pageable);
     }
 
@@ -132,8 +124,6 @@ public class CourtService {
                 court.setStatus(statusRequest.getStatus());
         return modelMapper.map(court, CourtResponse.class);
     }
-
-
 
     public CourtResponse getCourt(UUID courtID) {
         Court court = courtRepository.findCourtById(courtID);
@@ -158,28 +148,22 @@ public class CourtService {
         }
         court.setCourtType(courtRequest.getCourtType());
         court.setCourtName(courtRequest.getCourtName());
-        court.setLocation(courtRequest.getLocation());
         court.setDescription(courtRequest.getDescription());
-        try {
-            String openTimeStr = courtRequest.getOpenTime().length() == 5 ? courtRequest.getOpenTime() + ":00" : courtRequest.getOpenTime();
-            String closeTimeStr = courtRequest.getCloseTime().length() == 5 ? courtRequest.getCloseTime() + ":00" : courtRequest.getCloseTime();
-            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-            LocalTime openLocalTime = LocalTime.parse(openTimeStr, timeFormatter);
-            LocalTime closeLocalTime = LocalTime.parse(closeTimeStr, timeFormatter);
-            if (!openLocalTime.isBefore(closeLocalTime)) {
-                throw new IllegalArgumentException("Open time must be before close time!");
-            }
-            court.setOpenTime(String.valueOf(Time.valueOf(openLocalTime)));
-            court.setCloseTime(String.valueOf(Time.valueOf(closeLocalTime)));
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Invalid time format for openTime or closeTime. Use HH:mm or HH:mm:ss.");
-        }
+        court.setLength(courtRequest.getLength());
+        court.setWidth(courtRequest.getWidth());
+        court.setMaxPlayers(courtRequest.getMaxPlayers());
+        court.setYearBuild(courtRequest.getYearBuild());
         Optional<Account> optionalAccount = accountRepository.findById(courtRequest.getManager_id());
         Account account = optionalAccount.orElseThrow(() -> new EntityNotFoundException("Account not found"));
         if (account.getRole() != Role.ADMIN && account.getRole() != Role.MANAGER) {
             throw new IllegalArgumentException("Account is not a manager or admin");
         }
         court.setCourtManager(account);
+        BusinessLocation businessLocation = businessLocationRepository.findBusinessLocationById(courtRequest.getBusinessLocationId());
+        if (businessLocation == null) {
+            throw new EntityNotFoundException("Business Location not found");
+        }
+        court.setBusinessLocation(businessLocation);
         if (courtRequest.getPrices() != null && !courtRequest.getPrices().isEmpty()) {
             List<CourtPricing> prices = courtRequest.getPrices().stream()
                     .map(priceRequest -> {
@@ -232,7 +216,6 @@ public class CourtService {
         return modelMapper.map(updatedCourt, CourtResponse.class);
     }
 
-
     public void deleteImage(UUID courtId, UUID imageId) {
         Court court = courtRepository.findCourtById(courtId);
         if (court == null) {
@@ -274,5 +257,17 @@ public class CourtService {
             currentImages.add(image);
         }
         courtRepository.save(court);
+    }
+
+    public Page<CourtResponse> getCourtsByBusinessLocation(UUID businessLocationId, Boolean isDelete, int page, int size) {
+        BusinessLocation businessLocation = businessLocationRepository.findBusinessLocationById(businessLocationId);
+        if (businessLocation == null) {
+            throw new EntityNotFoundException("Business Location not found");
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Court> courts = courtRepository.findCourtsByBusinessLocationId(businessLocationId, isDelete, pageable);
+
+        return courts.map(court -> modelMapper.map(court, CourtResponse.class));
     }
 }

@@ -7,6 +7,7 @@ import com.example.BE_SportCourtBooking.model.Request.CourtPricingRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtStatusRequest;
 import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
+import com.example.BE_SportCourtBooking.model.Response.CourtResponse;
 import com.example.BE_SportCourtBooking.service.CourtService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.persistence.EntityNotFoundException;
@@ -39,6 +40,7 @@ public class CourtAPI {
         try {
             return ResponseEntity.ok(createResponse(200, true, "Court created successfully", courtService.createCourt(courtRequest)));
         } catch (EntityNotFoundException e) {
+            e.printStackTrace();
             return ResponseEntity.status(404).body(createResponse(404, false, "Create Court error", e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(createResponse(400, false, "Create Court error", e.getMessage()));
@@ -53,10 +55,11 @@ public class CourtAPI {
     public ResponseEntity<ApiResponse> getAllCourts(@RequestParam(required = false) CourtType courtType,
                                                     @RequestParam(required = false) CourtStatus status,
                                                     @RequestParam(required = false) String courtName,
+                                                    @RequestParam(required = false) Boolean isDelete,
                                                     @RequestParam(defaultValue = "0") int page,
                                                     @RequestParam(defaultValue = "10") int size)  {
         try {
-            Page<Court> courts = courtService.getAllCourts(courtType, status, courtName, page, size);
+            Page<Court> courts = courtService.getAllCourts(courtType, status, courtName, isDelete, page, size);
 
             return ResponseEntity.ok(createResponse(200, true, "Get all courts successfully", courts));
         } catch (Exception e) {
@@ -183,5 +186,24 @@ public class CourtAPI {
             return ResponseEntity.status(500).body(createResponse(500, false, "Add Images to Court error",  e.getMessage()));
         }
 
+    }
+
+    @GetMapping("getByBusinessLocation/{businessLocationId}")
+    public ResponseEntity<ApiResponse> getCourtsByBusinessLocation(@PathVariable UUID businessLocationId,
+                                                               @RequestParam(required = false) Boolean isDelete,
+                                                               @RequestParam(defaultValue = "0") int page,
+                                                               @RequestParam(defaultValue = "10") int size) {
+        try {
+            Page<CourtResponse> courts = courtService.getCourtsByBusinessLocation(businessLocationId,isDelete, page, size);
+            return ResponseEntity.ok(createResponse(200, true, "Get Courts by Business Location successfully", courts));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Get Courts by Business Location error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Get Courts by Business Location error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false,  "Get Courts by Business Location error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, null, "Get Courts by Business Location error: " + e.getMessage()));
+        }
     }
 }

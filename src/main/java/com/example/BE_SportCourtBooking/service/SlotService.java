@@ -162,9 +162,9 @@ public class SlotService {
         }
     }
 
-    public Page<Slot> getAllSlot(PriceType slotType, SlotStatus slotStatus, int page, int size) {
+    public Page<Slot> getAllSlot(PriceType slotType, SlotStatus slotStatus,Boolean isDelete, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return slotRepository.findByFilters(slotType, slotStatus, pageable);
+        return slotRepository.findByFilters(slotType, slotStatus, isDelete, pageable);
     }
 
     public SlotResponse getSlot(UUID slotID) {
@@ -191,7 +191,8 @@ public class SlotService {
         if (slot.getStatus() == SlotStatus.CHECKED_IN || slot.getStatus() == SlotStatus.IN_USE) {
             throw new IllegalStateException("Cannot delete a checked-in slot or a slot that is currently in use");
         }
-        slotRepository.delete(slot);
+        slot.setIsDelete(true);
+        slotRepository.save(slot);
     }
 
 
