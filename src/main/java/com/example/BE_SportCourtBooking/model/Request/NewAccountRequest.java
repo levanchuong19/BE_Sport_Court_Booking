@@ -33,7 +33,6 @@ public class NewAccountRequest {
 
     @NotBlank(message = "Password cannot be blank!")
     @Size(min = 6, message = "Password must be at least 6 characters")
-    @JsonIgnore
     @Column(name = "password", nullable = false)
     String password;
 

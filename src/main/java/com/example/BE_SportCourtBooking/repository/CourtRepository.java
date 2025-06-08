@@ -24,6 +24,18 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
             @Param("courtName") String courtName,
             @Param("isDelete") Boolean isDelete,
             Pageable pageable);
+//    Court findCourtByName(String name);
+//    Court findCourtByAddress(String address);
+
+    @Query("SELECT COUNT(c) FROM Court c")
+    Long countAllCourts();
+
+    @Query("SELECT c.status, COUNT(c) FROM Court c WHERE c.isDelete = false GROUP BY c.status")
+    List<Object[]> countGroupByStatus();
+
+    @Query("SELECT c.courtType, COUNT(c) FROM Court c WHERE c.isDelete = false GROUP BY c.courtType")
+    List<Object[]> countGroupByType();
+
     @Query("SELECT c FROM Court c WHERE c.businessLocation.id = :businessLocationId " +
             "AND (:isDelete IS NULL OR c.isDelete = :isDelete)")
     Page<Court> findCourtsByBusinessLocationId(@Param("businessLocationId") UUID businessLocationId,
