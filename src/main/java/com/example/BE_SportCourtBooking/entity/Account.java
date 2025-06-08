@@ -86,7 +86,7 @@ public class Account implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
         if(this.role != null){
-            authorities.add(new SimpleGrantedAuthority(this.role.toString()));
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
         }
         return authorities;
     }

@@ -49,8 +49,19 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
                         req -> req
-                                .requestMatchers("/**")
-                                .permitAll()
+                                .requestMatchers(
+                                        "/swagger-ui/**",
+                                        "/v3/api-docs/**",
+                                        "/swagger-resources/**",
+                                        "/api/auth/login",
+                                        "/api/auth/register",
+                                        "/api/forgot-password",
+                                        "/api/change-password",
+                                        "/websocket/**",
+                                        "/api/account"
+                                ).permitAll()
+                                // Admin endpoints - require ROLE_ADMIN
+                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .anyRequest()
                                 .authenticated()
 

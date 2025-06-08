@@ -6,6 +6,7 @@ import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
 import com.example.BE_SportCourtBooking.model.Request.CourtPricingRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtStatusRequest;
+import com.example.BE_SportCourtBooking.model.Request.CourtUpdateRequest;
 import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
 import com.example.BE_SportCourtBooking.model.Response.CourtResponse;
 import com.example.BE_SportCourtBooking.service.CourtService;
@@ -59,7 +60,7 @@ public class CourtAPI {
                                                     @RequestParam(defaultValue = "0") int page,
                                                     @RequestParam(defaultValue = "10") int size)  {
         try {
-            Page<Court> courts = courtService.getAllCourts(courtType, status, courtName, isDelete, page, size);
+            Page<CourtResponse> courts = courtService.getAllCourts(courtType, status, courtName, isDelete, page, size);
 
             return ResponseEntity.ok(createResponse(200, true, "Get all courts successfully", courts));
         } catch (Exception e) {
@@ -130,7 +131,7 @@ public class CourtAPI {
     @PutMapping("update/{courtId}")
     public ResponseEntity<ApiResponse> updateCourt(
             @PathVariable UUID courtId,
-            @Valid @RequestBody CourtRequest courtRequest) {
+            @Valid @RequestBody CourtUpdateRequest courtRequest) {
         try {
             return ResponseEntity.ok(createResponse(200, true, "Update Court successfully", courtService.updateCourt(courtId, courtRequest)));
         } catch (EntityNotFoundException e) {
