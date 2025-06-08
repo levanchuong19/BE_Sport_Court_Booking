@@ -5,9 +5,6 @@ import com.example.BE_SportCourtBooking.entity.Court;
 import com.example.BE_SportCourtBooking.entity.Enum.BookingStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.PriceType;
 import com.example.BE_SportCourtBooking.entity.Enum.SlotStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.Data;
 
 import java.math.BigDecimal;

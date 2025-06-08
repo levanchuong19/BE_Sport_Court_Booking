@@ -27,13 +27,13 @@ public class SecurityConfig {
     Filter filter;
 
     @Bean
-    public ModelMapper modelMapper() {
+    public ModelMapper modelMapper(){
         return new ModelMapper();
     }
 
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception{
         return configuration.getAuthenticationManager();
     }
 
@@ -43,7 +43,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)throws Exception{
         return http
                 .cors(cors -> cors.configure(http))
                 .csrf(AbstractHttpConfigurer::disable)

@@ -2,12 +2,11 @@ package com.example.BE_SportCourtBooking.entity;
 
 import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,23 +36,25 @@ public class Court {
     @Column(name = "courtName", nullable = false)
     String courtName;
 
-    @NotBlank(message = "Location cannot be blank!")
-    @Column(name = "location", nullable = false)
-    String location;
-
     @NotBlank(message = "Description cannot be blank!")
     @Column(name = "description", nullable = false)
     String description;
 
-    @NotBlank(message = "Open time cannot be blank!")
-    @Pattern(regexp = "^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$",
-            message = "Open time must be in HH:mm or HH:mm:ss format!")
-    String openTime;
+    @NotNull(message = "Construction year cannot be null!")
+    @Column(name = "construction_year")
+    Integer yearBuild;
 
-    @NotBlank(message = "Close time cannot be blank!")
-    @Pattern(regexp = "^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$",
-            message = "Close time must be in HH:mm or HH:mm:ss format!")
-    String closeTime;
+    @NotNull(message = "Length cannot be null!")
+    @Column(name = "length")
+    Double length;
+
+    @NotNull(message = "Width cannot be null!")
+    @Column(name = "width")
+    Double width;
+
+    @NotNull(message = "Maximum number of players cannot be null!")
+    @Column(name = "max_players")
+    Integer maxPlayers;
 
     @OneToMany(mappedBy = "court", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Image> images;
@@ -76,5 +77,10 @@ public class Court {
 
     @Column(name = "is_deleted")
     Boolean isDelete = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "business_location_id", nullable = false)
+    @NotNull(message = "Court must have a manager account!")
+    BusinessLocation businessLocation;
 
 }

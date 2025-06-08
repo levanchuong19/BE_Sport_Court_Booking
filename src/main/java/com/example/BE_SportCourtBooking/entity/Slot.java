@@ -72,4 +72,7 @@ public class Slot {
     @Column(name = "price")
     BigDecimal price;
 
+    @Column(name = "is_deleted")
+    Boolean isDelete = false;
+
 }

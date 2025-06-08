@@ -1,0 +1,171 @@
+package com.example.BE_SportCourtBooking.service;
+
+import com.example.BE_SportCourtBooking.entity.Account;
+import com.example.BE_SportCourtBooking.entity.BusinessLocation;
+import com.example.BE_SportCourtBooking.entity.Enum.Role;
+import com.example.BE_SportCourtBooking.model.Request.BusinessLocationRequest;
+import com.example.BE_SportCourtBooking.model.Response.BusinessLocationResponse;
+import com.example.BE_SportCourtBooking.model.Response.CourtResponse;
+import com.example.BE_SportCourtBooking.repository.AccountRepository;
+import com.example.BE_SportCourtBooking.repository.BusinessLocationRepo;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.lang.reflect.Type;
+import java.sql.Time;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+public class BusinessLocationService {
+    @Autowired
+    AccountRepository accountRepository;
+
+    @Autowired
+    BusinessLocationRepo businessLocationRepo;
+
+    @Autowired
+    ModelMapper modelMapper;
+
+    public void createBusinessLocation(BusinessLocationRequest request) {
+        Account account = accountRepository.findAccountById(request.getOwner());
+        if (account == null) {
+            throw new IllegalArgumentException("Owner account not found");
+        }
+        if (account.getRole() != Role.MANAGER && account.getRole() != Role.ADMIN) {
+            throw new IllegalArgumentException("Only managers or admins can create a business location");
+        }
+        BusinessLocation businessLocation = new BusinessLocation();
+        businessLocation.setName(request.getName());
+        businessLocation.setAddress(request.getAddress());
+        businessLocation.setOwner(account);
+        try {
+            // Chuẩn hóa định dạng: thêm ":00" nếu chỉ có HH:mm
+            String openTimeStr = request.getOpenTime().length() == 5 ? request.getOpenTime() + ":00" : request.getOpenTime();
+            String closeTimeStr = request.getCloseTime().length() == 5 ? request.getCloseTime() + ":00" : request.getCloseTime();
+
+            // Parse chuỗi thành LocalTime
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+            LocalTime openLocalTime = LocalTime.parse(openTimeStr, timeFormatter);
+            LocalTime closeLocalTime = LocalTime.parse(closeTimeStr, timeFormatter);
+
+            // Kiểm tra openTime < closeTime
+            if (!openLocalTime.isBefore(closeLocalTime)) {
+                throw new IllegalArgumentException("Open time must be before close time!");
+            }
+
+            // Chuyển LocalTime sang java.sql.Time
+            businessLocation.setOpenTime(String.valueOf(Time.valueOf(openLocalTime)));
+            businessLocation.setCloseTime(String.valueOf(Time.valueOf(closeLocalTime)));
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid time format for openTime or closeTime. Use HH:mm or HH:mm:ss.");
+        }
+        businessLocationRepo.save(businessLocation);
+    }
+    public List<BusinessLocationResponse> getAll() {
+        List<BusinessLocation> businessLocations = businessLocationRepo.findAll();
+        Type listType = new TypeToken<List<BusinessLocationResponse>>() {}.getType();
+        return modelMapper.map(businessLocations, listType);
+    }
+
+    public BusinessLocation getById(UUID id) {
+        BusinessLocation businessLocation = businessLocationRepo.findBusinessLocationById(id);
+        if (businessLocation == null) {
+            throw new IllegalArgumentException("Business Location not found");
+        }
+//        return modelMapper.map(businessLocation, BusinessLocationResponse.class);
+        return businessLocation;
+    }
+
+    public Page<BusinessLocation> getAllWithPagination(String name,String address,Boolean isDelete, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return businessLocationRepo.findByFilters(
+                name,
+                address,
+                isDelete,
+                pageable);
+    }
+
+    public void deleteBusinessLocation(UUID id) {
+        BusinessLocation businessLocation = businessLocationRepo.findBusinessLocationById(id);
+        if (businessLocation == null) {
+            throw new IllegalArgumentException("Business Location not found");
+        }
+        businessLocation.setIsDelete(true);
+        businessLocationRepo.save(businessLocation);
+    }
+
+    @Transactional
+    public BusinessLocationResponse updateBusinessLocation(UUID id, BusinessLocationRequest request) {
+        BusinessLocation businessLocation = businessLocationRepo.findBusinessLocationById(id);
+        if (businessLocation == null) {
+            throw new IllegalArgumentException("Business Location not found");
+        }
+        if (!StringUtils.hasText(request.getName())) {
+            throw new IllegalArgumentException("Business Location name cannot be empty");
+        }
+        if (!StringUtils.hasText(request.getAddress())) {
+            throw new IllegalArgumentException("Address cannot be empty");
+        }
+        businessLocation.setName(request.getName());
+        businessLocation.setAddress(request.getAddress());
+        try {
+            // Chuẩn hóa định dạng: thêm ":00" nếu chỉ có HH:mm
+            String openTimeStr = request.getOpenTime().length() == 5 ? request.getOpenTime() + ":00" : request.getOpenTime();
+            String closeTimeStr = request.getCloseTime().length() == 5 ? request.getCloseTime() + ":00" : request.getCloseTime();
+
+            // Parse chuỗi thành LocalTime
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+            LocalTime openLocalTime = LocalTime.parse(openTimeStr, timeFormatter);
+            LocalTime closeLocalTime = LocalTime.parse(closeTimeStr, timeFormatter);
+
+            // Kiểm tra openTime < closeTime
+            if (!openLocalTime.isBefore(closeLocalTime)) {
+                throw new IllegalArgumentException("Open time must be before close time!");
+            }
+
+            // Chuyển LocalTime sang java.sql.Time
+            businessLocation.setOpenTime(String.valueOf(Time.valueOf(openLocalTime)));
+            businessLocation.setCloseTime(String.valueOf(Time.valueOf(closeLocalTime)));
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid time format for openTime or closeTime. Use HH:mm or HH:mm:ss.");
+        }
+        Optional<Account> optionalAccount = accountRepository.findById(request.getOwner());
+        Account account = optionalAccount.orElseThrow(() -> new EntityNotFoundException("Account not found"));
+        if (account.getRole() != Role.ADMIN && account.getRole() != Role.MANAGER) {
+            throw new IllegalArgumentException("Account is not a manager or admin");
+        }
+
+        businessLocation.setOwner(account);
+        businessLocationRepo.save(businessLocation);
+
+        return modelMapper.map(businessLocation, BusinessLocationResponse.class);
+    }
+
+    public Page<BusinessLocationResponse> getBusinessLocationsByOwnerId(UUID ownerId,Boolean isDelete, int page, int size) {
+        Account owner = accountRepository.findAccountById(ownerId);
+        if (owner == null) {
+            throw new IllegalArgumentException("Owner account not found");
+        }
+        Pageable pageable = PageRequest.of(page, size);
+        Page<BusinessLocation> businessLocations = businessLocationRepo.findBusinessLocationsByOwnerId(ownerId , isDelete, pageable);
+        if (businessLocations.isEmpty()) {
+            throw new IllegalArgumentException("No business locations found for this owner");
+        }
+        Type listType = new TypeToken<Page<BusinessLocationResponse>>() {}.getType();
+        return modelMapper.map(businessLocations, listType);
+    }
+}
