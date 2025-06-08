@@ -7,6 +7,7 @@ import com.example.BE_SportCourtBooking.entity.Enum.Role;
 import com.example.BE_SportCourtBooking.model.Request.CourtPricingRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtRequest;
 import com.example.BE_SportCourtBooking.model.Request.CourtStatusRequest;
+import com.example.BE_SportCourtBooking.model.Request.CourtUpdateRequest;
 import com.example.BE_SportCourtBooking.model.Response.CourtResponse;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
 import com.example.BE_SportCourtBooking.repository.BusinessLocationRepo;
@@ -107,14 +108,15 @@ public class CourtService {
         }
     }
 
-    public Page<Court> getAllCourts(CourtType courtType, CourtStatus status, String courtName,Boolean isDelete, int page, int size) {
+    public Page<CourtResponse> getAllCourts(CourtType courtType, CourtStatus status, String courtName,Boolean isDelete, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return courtRepository.findByFilters(
+        Page<Court> court = courtRepository.findByFilters(
                 courtType,
                 status,
                 StringUtils.hasText(courtName) ? courtName : null,
                 isDelete,
                 pageable);
+        return court.map(c -> modelMapper.map(c, CourtResponse.class));
     }
 
     @Transactional
@@ -125,10 +127,10 @@ public class CourtService {
         return modelMapper.map(court, CourtResponse.class);
     }
 
-    public CourtResponse getCourt(UUID courtID) {
+    public Court getCourt(UUID courtID) {
         Court court = courtRepository.findCourtById(courtID);
         if(court == null ) throw new EntityNotFoundException("Court not found");
-        return modelMapper.map(court, CourtResponse.class);
+        return court;
     }
 
     public void deleteCourt(UUID courtID){
@@ -141,51 +143,50 @@ public class CourtService {
         courtRepository.save(court);
     }
 
-    public CourtResponse updateCourt(UUID courtId, CourtRequest courtRequest) {
+    public CourtResponse updateCourt(UUID courtId, CourtUpdateRequest courtUpdateRequest) {
         Court court = courtRepository.findCourtById(courtId);
         if (court == null) {
             throw new EntityNotFoundException("Court not found");
         }
-        court.setCourtType(courtRequest.getCourtType());
-        court.setCourtName(courtRequest.getCourtName());
-        court.setDescription(courtRequest.getDescription());
-        court.setLength(courtRequest.getLength());
-        court.setWidth(courtRequest.getWidth());
-        court.setMaxPlayers(courtRequest.getMaxPlayers());
-        court.setYearBuild(courtRequest.getYearBuild());
-        Optional<Account> optionalAccount = accountRepository.findById(courtRequest.getManager_id());
+        court.setCourtType(courtUpdateRequest.getCourtType());
+        court.setCourtName(courtUpdateRequest.getCourtName());
+        court.setDescription(courtUpdateRequest.getDescription());
+        court.setLength(courtUpdateRequest.getLength());
+        court.setWidth(courtUpdateRequest.getWidth());
+        court.setMaxPlayers(courtUpdateRequest.getMaxPlayers());
+        court.setYearBuild(courtUpdateRequest.getYearBuild());
+        Optional<Account> optionalAccount = accountRepository.findById(courtUpdateRequest.getManager_id());
         Account account = optionalAccount.orElseThrow(() -> new EntityNotFoundException("Account not found"));
         if (account.getRole() != Role.ADMIN && account.getRole() != Role.MANAGER) {
             throw new IllegalArgumentException("Account is not a manager or admin");
         }
         court.setCourtManager(account);
-        BusinessLocation businessLocation = businessLocationRepository.findBusinessLocationById(courtRequest.getBusinessLocationId());
+        BusinessLocation businessLocation = businessLocationRepository.findBusinessLocationById(courtUpdateRequest.getBusinessLocationId());
         if (businessLocation == null) {
             throw new EntityNotFoundException("Business Location not found");
         }
         court.setBusinessLocation(businessLocation);
-        if (courtRequest.getPrices() != null && !courtRequest.getPrices().isEmpty()) {
-            List<CourtPricing> prices = courtRequest.getPrices().stream()
-                    .map(priceRequest -> {
-                        CourtPricing courtPricing = new CourtPricing();
-                        courtPricing.setCourt(court);
-                        courtPricing.setPriceType(priceRequest.getPriceType());
-                        courtPricing.setPrice(priceRequest.getPrice());
-                        return courtPricing;
-                    }).toList();
-            court.setPrices(prices);
-        }
-        if (courtRequest.getImages() != null && !courtRequest.getImages().isEmpty()) {
-            List<Image> newImages = courtRequest.getImages().stream().map(url -> {
-                Image image = new Image();
-                image.setImageUrl(url);
-                image.setCourt(court);
-                return image;
-            }).collect(Collectors.toList());
-            court.getImages().addAll(newImages);
-        }
-
-        return modelMapper.map(court, CourtResponse.class);
+//        if (courtRequest.getPrices() != null && !courtRequest.getPrices().isEmpty()) {
+//            List<CourtPricing> prices = courtRequest.getPrices().stream()
+//                    .map(priceRequest -> {
+//                        CourtPricing courtPricing = new CourtPricing();
+//                        courtPricing.setCourt(court);
+//                        courtPricing.setPriceType(priceRequest.getPriceType());
+//                        courtPricing.setPrice(priceRequest.getPrice());
+//                        return courtPricing;
+//                    }).toList();
+//            court.setPrices(prices);
+//        }
+//        if (courtUpdateRequest.getImages() != null && !courtUpdateRequest.getImages().isEmpty()) {
+//            List<Image> newImages = courtUpdateRequest.getImages().stream().map(url -> {
+//                Image image = new Image();
+//                image.setImageUrl(url);
+//                image.setCourt(court);
+//                return image;
+//            }).collect(Collectors.toList());
+//            court.getImages().addAll(newImages);
+//        }
+        return modelMapper.map(courtRepository.save(court), CourtResponse.class);
     }
 
     public CourtResponse updateCourtPrice(UUID courtId, List<CourtPricingRequest> newPrices) {

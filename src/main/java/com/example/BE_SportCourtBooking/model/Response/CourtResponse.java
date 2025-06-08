@@ -12,19 +12,21 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class CourtResponse {
 
+    UUID id;
     CourtType courtType;
     String courtName;
     String description;
     CourtStatus status;
-    Account courtManager;
+//    Account courtManager;
     List<CourtResponse.PriceResponse> prices;
     List<Image> images;
-    List<Slot> slots;
-    BusinessLocation businessLocation;
+//    List<Slot> slots;
+//    BusinessLocation businessLocation;
     Integer yearBuild;
     Double length;
     Double width;

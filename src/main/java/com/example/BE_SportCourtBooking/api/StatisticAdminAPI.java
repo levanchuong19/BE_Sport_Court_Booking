@@ -19,6 +19,7 @@ import java.util.Map;
 @RequestMapping("/api/admin/stats")
 @CrossOrigin("*")
 @SecurityRequirement(name = "api")
+@PreAuthorize("hasRole('ADMIN')")
 public class StatisticAdminAPI {
     @Autowired
     StatisticAdminService statisticAdminService;
