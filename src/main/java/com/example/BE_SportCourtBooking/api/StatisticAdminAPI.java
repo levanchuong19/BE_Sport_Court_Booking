@@ -15,7 +15,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
-@PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/api/admin/stats")
 @CrossOrigin("*")
