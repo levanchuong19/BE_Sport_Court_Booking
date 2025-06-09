@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.Date;
 import java.util.UUID;
 
@@ -26,11 +25,11 @@ public class Slot {
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "customer_id")
     Account account;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "court_id", nullable = false)
     @JsonIgnore
     Court court;
@@ -74,5 +73,8 @@ public class Slot {
 
     @Column(name = "is_deleted")
     Boolean isDelete = false;
+
+    @Column(name = "reminder_sent")
+    Boolean reminderSent = false;
 
 }

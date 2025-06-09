@@ -56,6 +56,9 @@ public class SlotService {
     @Autowired
     AuthenticationService authenticationService;
 
+    @Autowired
+    EmailService emailService;
+
 
     @Transactional
     public String createSlot(SlotRequest slotRequest) {
@@ -350,6 +353,7 @@ public class SlotService {
             System.err.println("Error saving payment or transactions: " + e.getMessage());
             throw new RuntimeException("Failed to save payment or transactions", e);
         }
+        emailService.sendBookingConfirmationEmail(slot);
         // Debugging output
         System.out.println("Transactions to be saved: " + payment.getTransactions());
     }
@@ -366,4 +370,30 @@ public class SlotService {
         slotRepository.saveAll(overdueSlots);
     }
 
+    @Scheduled(fixedRate = 60000) // mỗi phút
+    public void checkAndSendReminders() {
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+        LocalTime now = LocalTime.now();
+        LocalTime threshold = now.plusMinutes(15);
+
+        List<Slot> allBookings = slotRepository.findAll(); // Giả sử đây là danh sách cần check
+
+        for (Slot booking : allBookings) {
+            try {
+                LocalTime bookingTime = LocalTime.parse(booking.getStartTime(), timeFormatter);
+
+
+                if (!bookingTime.isBefore(now) && !bookingTime.isAfter(threshold)&& !booking.getReminderSent()) {
+                    // Gửi mail nhắc nhở
+                    emailService.sendReminderEmail(booking);
+                    booking.setReminderSent(true);
+                    slotRepository.save(booking);
+                }
+
+            } catch (DateTimeParseException e) {
+                System.err.println("Lỗi định dạng thời gian: " + booking.getStartTime());
+            }
+        }
+    }
 }

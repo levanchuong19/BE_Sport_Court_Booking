@@ -74,4 +74,10 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
     @Query("SELECT COUNT(s) FROM Slot s WHERE s.bookingStatus = 'PENDING'")
     Long countPendingBookings();
 
+    @Query(value = "SELECT * FROM booking WHERE STR_TO_DATE(start_time, '%H:%i:%s') BETWEEN :start AND :end", nativeQuery = true)
+    List<Slot> findAllByStartTimeBetween(
+            @Param("start") String start,
+            @Param("end") String end
+    );
+
 }
