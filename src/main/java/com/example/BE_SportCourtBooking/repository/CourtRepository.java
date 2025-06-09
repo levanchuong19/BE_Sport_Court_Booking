@@ -36,4 +36,13 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
     @Query("SELECT c.courtType, COUNT(c) FROM Court c WHERE c.isDelete = false GROUP BY c.courtType")
     List<Object[]> countGroupByType();
 
+    @Query(value = "SELECT c.courtName, COUNT(s.id) AS totalPaidBookings " +
+            "FROM court c " +
+            "JOIN slot s ON s.court_id = c.id " +
+            "WHERE s.booking_status = 'PAID' " +
+            "GROUP BY c.courtName " +
+            "ORDER BY totalPaidBookings DESC " +
+            "LIMIT 5", nativeQuery = true)
+    List<Object[]> findTop5CourtsByPaidBookings();
+
 }

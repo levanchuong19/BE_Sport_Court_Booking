@@ -4,16 +4,17 @@ import com.example.BE_SportCourtBooking.model.Response.*;
 import com.example.BE_SportCourtBooking.service.StatisticAdminService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
@@ -72,9 +73,9 @@ public class StatisticAdminAPI {
         return ResponseEntity.ok(counts);
     }
 
-    @GetMapping("/booking-this-month")
-    public ResponseEntity<Map<String, Long>> getBookingThisMonth() {
-        Map<String, Long> counts = statisticAdminService.getPaidBookingsPerDayThisMonth();
+    @GetMapping("/booking-this-year")
+    public ResponseEntity<Map<String, Long>> getBookingThisYear() {
+        Map<String, Long> counts = statisticAdminService.getPaidBookingsPerMonthThisYear();
 
         return ResponseEntity.ok(counts);
     }
@@ -84,5 +85,57 @@ public class StatisticAdminAPI {
         Map<String, BigDecimal> sum = statisticAdminService.getRevenueThisMonthGroupByCourtType();
 
         return ResponseEntity.ok(sum);
+    }
+
+    @GetMapping("/booking-revenue-today")
+    public ResponseEntity<Map<String, Object>> getBookingsAndRevenueToday() {
+        Map<String, Object> list = statisticAdminService.getTodayPaidBookingAndRevenue();
+
+        return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/customer-yesterday-today")
+    public ResponseEntity<Map<String, Long>> getCustomersYesterdayToday() {
+        Map<String, Long> list = statisticAdminService.getCustomerAccountTodayYesterday();
+
+        return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/new-manager-this-year")
+    public ResponseEntity<List<Map<String, Object>>> getNewManagersThisYear() {
+        List<Map<String, Object>> list = statisticAdminService.getNewManagersPerMonthThisYear();
+
+        return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/all-manager-summary")
+    public ResponseEntity<Page<Map<String, Object>>> getAllManagersSummary(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Map<String, Object>> result = statisticAdminService.getPaidBookingsAndRevenueWithManagerInfo(pageable);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/all-court-summary")
+    public ResponseEntity<Page<Map<String, Object>>> getAllCourtsSummary(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Map<String, Object>> pageResult = statisticAdminService.getAllCourtsWithManagerAndPaidStats(pageable);
+
+        return ResponseEntity.ok(pageResult);
+    }
+
+
+    @GetMapping("/top5-court-bookings")
+    public ResponseEntity<List<Map<String, Object>>> getTop5CourtsBookings() {
+        List<Map<String, Object>> list = statisticAdminService.getTop5CourtsByPaidBookings();
+
+        return ResponseEntity.ok(list);
     }
 }

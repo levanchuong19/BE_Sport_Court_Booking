@@ -39,6 +39,16 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
                                   @Param("startTime") String startTime,
                                   @Param("endTime") String endTime);
 
+    @Query("SELECT COUNT(s) FROM Slot s " +
+            "WHERE s.bookingStatus = 'PAID' " +
+            "AND DATE(s.createAt) = CURRENT_DATE")
+    Long countTodayPaidBookings();
+
+    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s " +
+            "WHERE s.bookingStatus = 'PAID' " +
+            "AND DATE(s.createAt) = CURRENT_DATE")
+    BigDecimal sumTodayPaidIncome();
+
     @Query("SELECT FUNCTION('DATE', s.startDate) AS bookingDate, COUNT(s) AS total " +
             "FROM Slot s " +
             "WHERE s.bookingStatus = 'PAID' " +
@@ -47,14 +57,13 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
             "ORDER BY bookingDate")
     List<Object[]> countPaidBookingsPerDayThisWeek();
 
-    @Query(value = "SELECT DATE(s.startDate) AS bookingDate, COUNT(*) AS total " +
+    @Query(value = "SELECT MONTH(s.startDate) AS month, COUNT(*) AS total " +
             "FROM slot s " +
-            "WHERE s.bookingStatus = 'PAID' " +
+            "WHERE s.booking_status = 'PAID' " +
             "AND YEAR(s.startDate) = YEAR(CURRENT_DATE) " +
-            "AND MONTH(s.startDate) = MONTH(CURRENT_DATE) " +
-            "GROUP BY DATE(s.startDate) " +
-            "ORDER BY bookingDate", nativeQuery = true)
-    List<Object[]> countPaidBookingsPerDayThisMonth();
+            "GROUP BY MONTH(s.startDate) " +
+            "ORDER BY month", nativeQuery = true)
+    List<Object[]> countPaidBookingsPerMonthThisYear();
 
 
 //    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s WHERE s.bookingStatus = 'PAID'")
