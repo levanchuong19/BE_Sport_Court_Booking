@@ -41,5 +41,14 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
     Page<Court> findCourtsByBusinessLocationId(@Param("businessLocationId") UUID businessLocationId,
                                                                   @Param("isDelete") Boolean isDelete,
                                                                   Pageable pageable);
+    @Query(value = "SELECT c.court_name, COUNT(s.id) AS totalPaidBookings " +
+            "FROM courts c " +
+            "JOIN slots s ON s.court_id = c.id " +
+            "WHERE s.booking_status = 'PAID' " +
+            "GROUP BY c.court_name " +
+            "ORDER BY totalPaidBookings DESC " +
+            "LIMIT 5", nativeQuery = true)
+    List<Object[]> findTop5CourtsByPaidBookings();
+
 
 }

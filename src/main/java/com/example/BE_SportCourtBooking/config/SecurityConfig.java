@@ -58,7 +58,8 @@ public class SecurityConfig {
                                         "/api/forgot-password",
                                         "/api/change-password",
                                         "/websocket/**",
-                                        "/api/account"
+                                        "/api/account",
+                                        "/api/support/create"
                                 ).permitAll()
                                 // Admin endpoints - require ROLE_ADMIN
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
