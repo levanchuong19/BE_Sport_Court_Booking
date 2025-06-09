@@ -24,4 +24,5 @@ public class SlotResponse {
     String paymentUrl;
     BookingStatus bookingStatus ;
     BigDecimal price;
+    Boolean reminderSent;
 }

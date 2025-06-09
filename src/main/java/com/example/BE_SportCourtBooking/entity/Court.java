@@ -78,7 +78,7 @@ public class Court {
     @Column(name = "is_deleted")
     Boolean isDelete = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "business_location_id", nullable = false)
     @NotNull(message = "Court must have a manager account!")
     BusinessLocation businessLocation;
