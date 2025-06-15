@@ -1,15 +1,10 @@
 package com.example.BE_SportCourtBooking.api;
 
 import com.example.BE_SportCourtBooking.entity.BusinessLocation;
-import com.example.BE_SportCourtBooking.entity.Court;
-import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
-import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
 import com.example.BE_SportCourtBooking.model.Request.BusinessLocationRequest;
-import com.example.BE_SportCourtBooking.model.Request.CourtRequest;
 import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
 import com.example.BE_SportCourtBooking.model.Response.BusinessLocationResponse;
 import com.example.BE_SportCourtBooking.service.BusinessLocationService;
-import com.example.BE_SportCourtBooking.service.CourtService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
@@ -17,8 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 import java.util.UUID;
 
 @RestController

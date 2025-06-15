@@ -50,5 +50,9 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
             "LIMIT 5", nativeQuery = true)
     List<Object[]> findTop5CourtsByPaidBookings();
 
-
+    @Query("SELECT c, COUNT(b.id) as bookingCount " +
+            "FROM Court c LEFT JOIN Slot b ON c.id = b.court.id " +
+            "GROUP BY c " +
+            "ORDER BY bookingCount DESC")
+    List<Object[]> findTop3CourtsByBookingCount();
 }

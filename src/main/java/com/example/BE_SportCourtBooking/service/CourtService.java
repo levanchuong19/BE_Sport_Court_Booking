@@ -17,6 +17,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,10 +28,7 @@ import java.sql.Time;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -270,5 +268,36 @@ public class CourtService {
         Page<Court> courts = courtRepository.findCourtsByBusinessLocationId(businessLocationId, isDelete, pageable);
 
         return courts.map(court -> modelMapper.map(court, CourtResponse.class));
+    }
+
+    public List<CourtResponse> getTop3CourtsByBookingCount() {
+        List<Object[]> results = courtRepository.findTop3CourtsByBookingCount();
+
+        return results.stream()
+                .limit(3) // Đảm bảo chỉ lấy 3 sân
+                .map(result -> {
+                    Court court = (Court) result[0];
+                    CourtResponse response = new CourtResponse();
+                    response.setId(court.getId());
+                    response.setCourtType(court.getCourtType());
+                    response.setCourtName(court.getCourtName());
+                    response.setDescription(court.getDescription());
+                    response.setStatus(court.getStatus());
+                    response.setYearBuild(court.getYearBuild());
+                    response.setLength(court.getLength());
+                    response.setWidth(court.getWidth());
+                    response.setMaxPlayers(court.getMaxPlayers());
+                    response.setImages(court.getImages());
+                    response.setPrices(court.getPrices().stream()
+                            .map(price -> {
+                                CourtResponse.PriceResponse priceResponse = new CourtResponse.PriceResponse();
+                                priceResponse.setPriceType(price.getPriceType());
+                                priceResponse.setPrice(price.getPrice());
+                                return priceResponse;
+                            })
+                            .collect(Collectors.toList()));
+                    return response;
+                })
+                .collect(Collectors.toList());
     }
 }

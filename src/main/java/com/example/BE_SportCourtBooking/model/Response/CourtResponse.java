@@ -22,11 +22,8 @@ public class CourtResponse {
     String courtName;
     String description;
     CourtStatus status;
-//    Account courtManager;
     List<CourtResponse.PriceResponse> prices;
     List<Image> images;
-//    List<Slot> slots;
-//    BusinessLocation businessLocation;
     Integer yearBuild;
     Double length;
     Double width;
