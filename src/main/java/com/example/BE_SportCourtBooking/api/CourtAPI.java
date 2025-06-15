@@ -1,6 +1,4 @@
 package com.example.BE_SportCourtBooking.api;
-
-import com.example.BE_SportCourtBooking.entity.Court;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
 import com.example.BE_SportCourtBooking.model.Request.CourtPricingRequest;
@@ -64,7 +62,7 @@ public class CourtAPI {
 
             return ResponseEntity.ok(createResponse(200, true, "Get all courts successfully", courts));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(createResponse(500, false, null, "Get all courts error: " + e.getMessage()));
+            return ResponseEntity.status(500).body(createResponse(500, false, "Get all courts error: " , e.getMessage()));
         }
     }
 
@@ -73,7 +71,7 @@ public class CourtAPI {
         try {
             return ResponseEntity.ok(createResponse(200, true, "Get courts successfully", courtService.getCourt(courtId)));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(createResponse(500, false, null, "Get court error: " + e.getMessage()));
+            return ResponseEntity.status(500).body(createResponse(500, false,  "Get court error: " ,e.getMessage()));
         }
     }
 
@@ -168,7 +166,7 @@ public class CourtAPI {
         try {
             return ResponseEntity.ok(createResponse(200, true, "Get Images Court successfully", courtService.getImagesByCourt(courtId)));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(createResponse(500, false, null, "Get Images Court error: " + e.getMessage()));
+            return ResponseEntity.status(500).body(createResponse(500, false, "Get Images Court error: " , e.getMessage()));
         }
     }
 
@@ -204,7 +202,23 @@ public class CourtAPI {
         } catch (IllegalStateException e) {
             return ResponseEntity.status(403).body(createResponse(403, false,  "Get Courts by Business Location error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(createResponse(500, false, null, "Get Courts by Business Location error: " + e.getMessage()));
+            return ResponseEntity.status(500).body(createResponse(500, false, "Get Courts by Business Location error: " , e.getMessage()));
+        }
+    }
+
+    @GetMapping("/top3-court-bookings")
+    public ResponseEntity<ApiResponse> getTop3CourtsBookings() {
+        try {
+            List<CourtResponse> list = courtService.getTop3CourtsByBookingCount();
+            return ResponseEntity.ok(createResponse(200, true, "Get top 3 Courts Bookings successfully", list));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Get top 3 Courts Bookings error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Get top 3 Courts Bookings error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false, "Get top 3 Courts Bookings error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Get top 3 Courts Bookings error: ", e.getMessage()));
         }
     }
 }

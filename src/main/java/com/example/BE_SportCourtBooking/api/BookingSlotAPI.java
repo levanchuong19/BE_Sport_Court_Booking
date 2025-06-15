@@ -54,7 +54,7 @@ public class BookingSlotAPI {
             Page<Slot> slot = slotService.getAllSlot(slotType,slotStatus,isDelete, page, size);
             return ResponseEntity.ok(createResponse(200, true, "Get all slot successfully", slot));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(createResponse(500, false, null, "Get all slot error: " + e.getMessage()));
+            return ResponseEntity.status(500).body(createResponse(500, false, "Get all slot error: " ,e.getMessage()));
         }
     }
 
