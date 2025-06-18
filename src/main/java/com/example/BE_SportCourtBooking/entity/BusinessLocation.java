@@ -1,6 +1,9 @@
 package com.example.BE_SportCourtBooking.entity;
 
+import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
+import com.example.BE_SportCourtBooking.entity.Enum.LocationStatus;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,6 +11,9 @@ import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,6 +47,23 @@ public class BusinessLocation {
             message = "Close time must be in HH:mm or HH:mm:ss format!")
     String closeTime;
 
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "created_at", updatable = false)
+    Date createAt;
+
+    @Enumerated(EnumType.STRING)
+    LocationStatus status ;
+
+    String images;
+
+    String description;
+
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "modified_at", updatable = false)
+    Date modifiedAt;
+
     @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false)
     Account owner;
@@ -51,4 +74,6 @@ public class BusinessLocation {
     @Column(name = "is_deleted", nullable = false)
 
     Boolean isDelete = false;
+
+
 }
