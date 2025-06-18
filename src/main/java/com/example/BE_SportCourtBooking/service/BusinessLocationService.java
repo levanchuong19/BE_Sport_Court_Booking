@@ -2,9 +2,13 @@ package com.example.BE_SportCourtBooking.service;
 
 import com.example.BE_SportCourtBooking.entity.Account;
 import com.example.BE_SportCourtBooking.entity.BusinessLocation;
+import com.example.BE_SportCourtBooking.entity.Court;
+import com.example.BE_SportCourtBooking.entity.Enum.LocationStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.Role;
 import com.example.BE_SportCourtBooking.model.Request.BusinessLocationRequest;
+import com.example.BE_SportCourtBooking.model.Response.AccountResponse;
 import com.example.BE_SportCourtBooking.model.Response.BusinessLocationResponse;
+import com.example.BE_SportCourtBooking.model.Response.CourtResponse;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
 import com.example.BE_SportCourtBooking.repository.BusinessLocationRepo;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,6 +30,7 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class BusinessLocationService {
@@ -49,6 +54,10 @@ public class BusinessLocationService {
         BusinessLocation businessLocation = new BusinessLocation();
         businessLocation.setName(request.getName());
         businessLocation.setAddress(request.getAddress());
+        businessLocation.setImages(request.getImages());
+        businessLocation.setDescription(request.getDescription());
+        businessLocation.setStatus(LocationStatus.INACTIVE);
+        businessLocation.setCreateAt(new java.util.Date());
         businessLocation.setOwner(account);
         try {
             // Chuẩn hóa định dạng: thêm ":00" nếu chỉ có HH:mm
@@ -147,6 +156,11 @@ public class BusinessLocationService {
             throw new IllegalArgumentException("Account is not a manager or admin");
         }
 
+        if (request.getImages() != null && !request.getImages().isEmpty()) {
+            businessLocation.setImages(request.getImages());
+        }
+        businessLocation.setDescription(request.getDescription());
+        businessLocation.setModifiedAt(new java.util.Date());
         businessLocation.setOwner(account);
         businessLocationRepo.save(businessLocation);
 
@@ -165,5 +179,31 @@ public class BusinessLocationService {
         }
         Type listType = new TypeToken<Page<BusinessLocationResponse>>() {}.getType();
         return modelMapper.map(businessLocations, listType);
+    }
+
+    public List<BusinessLocationResponse> getTop3BusinessLocationsByBookingCount() {
+        List<Object[]> results = businessLocationRepo.findTop3BusinessLocationsByBookingCount(PageRequest.of(0, 3));
+        return results.stream()
+                .limit(3)
+                .map(result -> {
+            BusinessLocation businessLocation = (BusinessLocation) result[0];
+            BusinessLocationResponse response = new BusinessLocationResponse();
+            response.setId(businessLocation.getId());
+            response.setName(businessLocation.getName());
+            response.setAddress(businessLocation.getAddress());
+            response.setOpenTime(businessLocation.getOpenTime());
+            response.setCloseTime(businessLocation.getCloseTime());
+            response.setDescription(businessLocation.getDescription());
+            response.setImages(businessLocation.getImages());
+            response.setCreateAt(businessLocation.getCreateAt());
+            response.setModifiedAt(businessLocation.getModifiedAt());
+            response.setStatus(businessLocation.getStatus());
+            Account owner = businessLocation.getOwner();
+            response.setOwner(modelMapper.map(owner, AccountResponse.class));
+            response.setCourts(businessLocation.getCourts().stream()
+                    .map(court -> modelMapper.map(court, CourtResponse.class))
+                    .collect(Collectors.toSet()));
+            return response;
+        }).toList();
     }
 }

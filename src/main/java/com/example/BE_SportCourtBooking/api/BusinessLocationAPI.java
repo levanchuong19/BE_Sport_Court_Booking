@@ -4,6 +4,7 @@ import com.example.BE_SportCourtBooking.entity.BusinessLocation;
 import com.example.BE_SportCourtBooking.model.Request.BusinessLocationRequest;
 import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
 import com.example.BE_SportCourtBooking.model.Response.BusinessLocationResponse;
+import com.example.BE_SportCourtBooking.model.Response.CourtResponse;
 import com.example.BE_SportCourtBooking.service.BusinessLocationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.persistence.EntityNotFoundException;
@@ -12,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -115,6 +118,21 @@ public class BusinessLocationAPI {
             return ResponseEntity.badRequest().body(createResponse(400, false, "Get Courts by Owner ID error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(createResponse(500, false, "Get Courts by Owner ID error", e.getMessage()));
+        }
+    }
+    @GetMapping("/top3-BusinessLocations")
+    public ResponseEntity<ApiResponse> getTop3BusinessLocations() {
+        try {
+            List<BusinessLocationResponse> list = businessLocationService.getTop3BusinessLocationsByBookingCount();
+            return ResponseEntity.ok(createResponse(200, true, "Get top 3 Business Locations successfully", list));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Get top 3 Business Locations error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Get top 3 Business Locations error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false, "Get top 3 Business Locations error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Get top 3 Business Locations error: ", e.getMessage()));
         }
     }
 }

@@ -288,6 +288,7 @@ public class CourtService {
                     response.setWidth(court.getWidth());
                     response.setMaxPlayers(court.getMaxPlayers());
                     response.setImages(court.getImages());
+                    response.setBusinessLocation(court.getBusinessLocation());
                     response.setPrices(court.getPrices().stream()
                             .map(price -> {
                                 CourtResponse.PriceResponse priceResponse = new CourtResponse.PriceResponse();
@@ -300,4 +301,5 @@ public class CourtService {
                 })
                 .collect(Collectors.toList());
     }
+
 }

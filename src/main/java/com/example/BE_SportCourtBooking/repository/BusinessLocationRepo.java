@@ -29,4 +29,12 @@ Page<BusinessLocation> findByFilters(@Param("name") String name,
                                                @Param("isDelete") Boolean isDelete,
                                                Pageable pageable);
 
+
+    @Query("SELECT bl, COUNT(s.id) as bookingCount " +
+            "FROM BusinessLocation bl " +
+            "JOIN bl.courts c " +
+            "LEFT JOIN Slot s ON s.court.id = c.id " +
+            "GROUP BY bl " +
+            "ORDER BY bookingCount DESC")
+    List<Object[]> findTop3BusinessLocationsByBookingCount(Pageable pageable);
 }
