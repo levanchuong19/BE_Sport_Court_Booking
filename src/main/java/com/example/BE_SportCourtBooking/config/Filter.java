@@ -74,11 +74,12 @@ public class Filter extends OncePerRequestFilter {
             "/swagger-resources/**",
             "/api/auth/login",
             "/api/auth/register",
-            "/api/forgot-password",
-            "/api/change-password",
+            "/api/auth/forgot-password",
+            "/api/auth/change-password",
             "/websocket/**",
             "/api/account",
-            "/api/support/create"
+            "/api/support/create",
+            "/api/notifications/**"
     );
 
     public boolean checkIsPublicAPI(String uri) {

@@ -128,5 +128,8 @@ public class Account implements UserDetails {
     @JsonIgnore
     List<Slot> slots;
 
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Notification> notifications;
 
 }

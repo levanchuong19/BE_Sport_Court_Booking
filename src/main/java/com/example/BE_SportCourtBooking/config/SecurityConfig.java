@@ -55,11 +55,12 @@ public class SecurityConfig {
                                         "/swagger-resources/**",
                                         "/api/auth/login",
                                         "/api/auth/register",
-                                        "/api/forgot-password",
-                                        "/api/change-password",
+                                        "/api/auth/forgot-password",
+                                        "/api/auth/change-password",
                                         "/websocket/**",
                                         "/api/account",
-                                        "/api/support/create"
+                                        "/api/support/create",
+                                        "/api/notifications/**"
                                 ).permitAll()
                                 // Admin endpoints - require ROLE_ADMIN
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
