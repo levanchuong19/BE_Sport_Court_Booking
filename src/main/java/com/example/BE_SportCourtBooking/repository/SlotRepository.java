@@ -100,4 +100,22 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
             @Param("end") String end
     );
 
+    @Query("SELECT s FROM Slot s WHERE s.status = :status " +
+            "AND s.isDelete = false " +
+            "AND s.bookingStatus != 'COMPLETED' " + // Loại bỏ slot đã hoàn tất
+            "AND (s.endDate < :currentTime OR (s.endDate = :currentTime AND s.endTime <= :currentTimeStr))")
+    List<Slot> findFinishedSlots(
+            @Param("status") SlotStatus status,
+            @Param("currentTime") LocalDate currentTime,
+            @Param("currentTimeStr") String currentTimeStr
+    );
+
+    @Query("SELECT s FROM Slot s WHERE s.status = :status " +
+            "AND s.isDelete = false " +
+            "AND (s.startDate = :currentDate AND s.startTime <= :currentTimeStr)")
+    List<Slot> findCheckedInSlots(
+            @Param("status") SlotStatus status,
+            @Param("currentDate") LocalDate currentDate,
+            @Param("currentTimeStr") String currentTimeStr
+    );
 }
