@@ -126,11 +126,11 @@ public class AuthenticationService implements UserDetailsService {
 
     // send email, set new password for user
     public ForgotPasswordResponse forgotPassword(ForgotPasswordRequest request) {
-        Account account = accountRepository.findAccountByEmail(request.getEmail());
+        Account account = accountRepository.findAccountByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Account not found"));
         if (account == null) {
             throw new RuntimeException("Account not found");
         }
-
         String newPassword = generateRandomPassword(8);
         account.setPassword(passwordEncoder.encode(newPassword));
         accountRepository.save(account);
@@ -180,7 +180,8 @@ public class AuthenticationService implements UserDetailsService {
             GoogleIdToken.Payload payload = idToken.getPayload();
             String email = payload.getEmail();
 
-            Account account = accountRepository.findAccountByEmail(email);
+            Account account = accountRepository.findAccountByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Account not found"));
             if (account == null) {
                 // Create new account
                 account = new Account();
