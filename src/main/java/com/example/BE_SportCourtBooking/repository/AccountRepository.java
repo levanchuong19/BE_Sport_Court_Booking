@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface AccountRepository extends JpaRepository<Account, UUID> {
@@ -17,7 +18,7 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
 
     Account findAccountByPhone(String phone);
 
-    Account findAccountByEmail(String fullName);
+    Optional<Account> findAccountByEmail(String email);
 
     Account findAccountByRole(Role role);
 

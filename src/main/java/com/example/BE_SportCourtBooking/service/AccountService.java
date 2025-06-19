@@ -82,9 +82,12 @@ public class AccountService {
     }
 
     public Account getCurrentAccount() {
-        Account account = (Account) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return accountRepository.findAccountById(account.getId());
+        String principal = SecurityContextHolder.getContext().getAuthentication().getName();
+        System.out.println("Principal (username): " + principal); // DEBUG
+        return accountRepository.findAccountByEmail(principal)
+                .orElseThrow(() -> new AccountNotFoundException("Account không tồn tại"));
     }
+
 
     public Account getAccount(UUID id) {
         Account account = accountRepository.findAccountById(id);
