@@ -206,4 +206,18 @@ public class BusinessLocationService {
             return response;
         }).toList();
     }
+
+    @Transactional
+    public BusinessLocationResponse activeBusinessLocation(UUID id) {
+        BusinessLocation businessLocation = businessLocationRepo.findBusinessLocationById(id);
+        if (businessLocation == null) {
+            throw new IllegalArgumentException("Business Location not found");
+        }
+        if (businessLocation.getStatus() != LocationStatus.INACTIVE) {
+            throw new IllegalArgumentException("Business Location is not allow inactive");
+        }
+        businessLocation.setStatus(LocationStatus.ACTIVE);
+        businessLocationRepo.save(businessLocation);
+        return modelMapper.map(businessLocation, BusinessLocationResponse.class);
+    }
 }

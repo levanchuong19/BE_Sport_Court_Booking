@@ -396,4 +396,101 @@ public class SlotService {
             }
         }
     }
+
+    @Transactional
+    @Scheduled(fixedRate = 60000) // Chạy mỗi phút
+    public void updateFinishedSlotsAndSendThankYouEmail() {
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        String currentTimeStr = now.format(timeFormatter);
+
+        // Tìm các slot đã kết thúc và chưa hoàn tất
+        List<Slot> finishedSlots = slotRepository.findFinishedSlots(
+                SlotStatus.IN_USE,
+                now.toLocalDate(),
+                currentTimeStr
+        );
+
+        for (Slot slot : finishedSlots) {
+            try {
+                LocalDate endDate = slot.getEndDate();
+                LocalTime endTime = LocalTime.parse(
+                        slot.getEndTime().length() == 5 ? slot.getEndTime() + ":00" : slot.getEndTime(),
+                        timeFormatter
+                );
+                LocalDateTime endDateTime = LocalDateTime.of(endDate, endTime);
+
+                // Chỉ xử lý nếu thời gian hiện tại vượt qua thời gian kết thúc và chưa gửi email
+                if (now.isAfter(endDateTime) && !slot.getReminderSent()) {
+                    // Cập nhật trạng thái slot
+                    slot.setStatus(SlotStatus.COMPLETED);
+                    slot.setBookingStatus(BookingStatus.COMPLETED);
+                    Slot updatedSlot = slotRepository.save(slot); // Lưu và lấy lại slot
+                    slotRepository.flush(); // Đảm bảo thay đổi được ghi ngay
+
+                    // Gửi email cảm ơn
+                    emailService.sendThankYouEmail(slot);
+                    updatedSlot.setReminderSent(true); // Cập nhật cờ sau khi gửi email thành công
+                    slotRepository.save(updatedSlot);
+                    slotRepository.flush();
+
+                    // Cập nhật trạng thái court
+                    Court court = slot.getCourt();
+                    if (court != null && court.getStatus() == CourtStatus.IN_USE) {
+                        court.setStatus(CourtStatus.AVAILABLE);
+                        courtRepository.save(court);
+                        courtRepository.flush();
+                    }
+                }
+            } catch (DateTimeParseException e) {
+                System.err.println("Lỗi định dạng thời gian cho slot " + slot.getId() + ": " + e.getMessage());
+            } catch (Exception e) {
+                System.err.println("Lỗi khi xử lý slot " + slot.getId() + ": " + e.getMessage());
+            }
+        }
+    }
+
+    @Transactional
+    @Scheduled(fixedRate = 60000) // Chạy mỗi phút
+    public void updateCheckedInSlotsToInUse() {
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        String currentTimeStr = now.format(timeFormatter);
+
+        // Tìm các slot đã check-in và đến thời gian sử dụng
+        List<Slot> checkedInSlots = slotRepository.findCheckedInSlots(
+                SlotStatus.CHECKED_IN,
+                now.toLocalDate(),
+                currentTimeStr
+        );
+
+        for (Slot slot : checkedInSlots) {
+            try {
+                LocalDate startDate = slot.getStartDate();
+                LocalTime startTime = LocalTime.parse(
+                        slot.getStartTime().length() == 5 ? slot.getStartTime() + ":00" : slot.getStartTime(),
+                        timeFormatter
+                );
+                LocalDateTime startDateTime = LocalDateTime.of(startDate, startTime);
+
+                if (now.isAfter(startDateTime) || now.isEqual(startDateTime)) {
+                    // Cập nhật trạng thái slot thành IN_USE
+                    slot.setStatus(SlotStatus.IN_USE);
+                    slot.setReminderSent(false);
+                    slotRepository.save(slot);
+
+                    // Cập nhật trạng thái court thành IN_USE
+                    Court court = slot.getCourt();
+                    if (court != null) {
+                        court.setStatus(CourtStatus.IN_USE);
+                        courtRepository.save(court);
+                    }
+                }
+            } catch (DateTimeParseException e) {
+                System.err.println("Lỗi định dạng thời gian cho slot " + slot.getId() + ": " + e.getMessage());
+            } catch (Exception e) {
+                System.err.println("Lỗi khi xử lý slot " + slot.getId() + ": " + e.getMessage());
+            }
+        }
+    }
 }

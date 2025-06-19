@@ -5,6 +5,7 @@ import com.example.BE_SportCourtBooking.entity.Slot;
 import com.example.BE_SportCourtBooking.model.Request.ForgotPasswordRequest;
 import com.example.BE_SportCourtBooking.model.Response.EmailDetail;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
+import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
@@ -108,5 +109,34 @@ public class EmailService {
         message.setSubject(subject);
         message.setText(content);
         javaMailSender.send(message);
+    }
+
+    public void sendThankYouEmail(Slot slot) {
+        Account customer = slot.getAccount();
+        if (customer == null || customer.getEmail() == null) {
+            throw new IllegalStateException("Không tìm thấy thông tin khách hàng hoặc email cho slot " + slot.getId());
+        }
+
+        String recipient = customer.getEmail();
+        String subject = "Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!";
+        String reviewLink = "http://localhost:5173/review?slotId=" + slot.getId(); // Điều chỉnh URL theo hệ thống
+
+        String body = "<h3>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</h3>" +
+                "<p>Chúng tôi rất vui được phục vụ bạn tại sân " + slot.getCourt().getCourtName() +
+                " vào ngày " + slot.getStartDate() + " từ " + slot.getStartTime() + " đến " + slot.getEndTime() + ".</p>" +
+                "<p>Mong bạn quay lại nền tảng của chúng tôi để đánh giá chất lượng dịch vụ: " +
+                "<a href=\"" + reviewLink + "\">Đánh giá ngay</a></p>" +
+                "<p>Trân trọng,<br>Đội ngũ SportCourtBooking</p>";
+
+        try {
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(recipient);
+            helper.setSubject(subject);
+            helper.setText(body, true); // Gửi email dạng HTML
+            javaMailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Không thể gửi email cảm ơn cho slot " + slot.getId(), e);
+        }
     }
 }
