@@ -60,7 +60,8 @@ public class SecurityConfig {
                                         "/websocket/**",
                                         "/api/account",
                                         "/api/support/create",
-                                        "/api/notifications/**"
+                                        "/api/notifications/**",
+                                        "/api/feedback/court/**"
                                 ).permitAll()
                                 // Admin endpoints - require ROLE_ADMIN
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
