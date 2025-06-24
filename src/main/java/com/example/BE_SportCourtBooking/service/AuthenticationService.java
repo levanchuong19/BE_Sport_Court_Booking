@@ -14,6 +14,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,13 +25,14 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class AuthenticationService implements UserDetailsService {
+
+    @Value("${google.client-id}")
+    private String googleClientId;
+
     @Autowired
     AccountRepository accountRepository;
 
@@ -166,31 +168,42 @@ public class AuthenticationService implements UserDetailsService {
     }
 
     // Adding Google Client ID o day
-    private final GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
-            .setAudience(Collections.singletonList("YOUR_GOOGLE_CLIENT_ID"))
-            .build();
+    private GoogleIdTokenVerifier getGoogleVerifier() {
+        return new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
+                .setAudience(Collections.singletonList(googleClientId))
+                .build();
+    }
 
     public GoogleLoginResponse authenticateWithGoogle(GoogleLoginRequest request) {
         try {
-            GoogleIdToken idToken = verifier.verify(request.getToken());
+            GoogleIdToken idToken = getGoogleVerifier().verify(request.getToken());
             if (idToken == null) {
                 throw new RuntimeException("ID token verification failed");
             }
 
             GoogleIdToken.Payload payload = idToken.getPayload();
             String email = payload.getEmail();
+            String pictureUrl = (String) payload.get("picture");
 
-            Account account = accountRepository.findAccountByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("Account not found"));
-            if (account == null) {
-                // Create new account
+            Optional<Account> optionalAccount = accountRepository.findAccountByEmail(email);
+            Account account;
+
+            if (optionalAccount.isEmpty()) {
+                // Account chưa tồn tại → tạo mới
                 account = new Account();
                 account.setEmail(email);
                 account.setFullName((String) payload.get("name"));
-                account.setPassword(passwordEncoder.encode("12345")); // default password
-                account.setRole(Role.CUSTOMER); // default role
+                account.setImage(pictureUrl);
+                String randomPassword = UUID.randomUUID().toString(); // hoặc bạn có generateRandomPassword() rồi
+                account.setPassword(passwordEncoder.encode(randomPassword));
+                account.setRole(Role.CUSTOMER);
                 account.setIsDelete(false);
                 accountRepository.save(account);
+            } else {
+                account = optionalAccount.get();
+                if (Boolean.TRUE.equals(account.getIsDelete())) {
+                    throw new RuntimeException("Account is marked as deleted");
+                }
             }
 
             if (Boolean.TRUE.equals(account.getIsDelete())) {

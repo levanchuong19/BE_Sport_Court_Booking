@@ -75,5 +75,10 @@ public class BusinessLocation {
 
     Boolean isDelete = false;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
 
 }

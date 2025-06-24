@@ -83,4 +83,22 @@ public class CourtFeedbackService {
         return dto;
     }
 
+    public void deleteFeedbackById(UUID feedbackId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Account currentUser = accountRepository.findAccountByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+
+        CourtFeedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new ResourceNotFoundException("Feedback not found"));
+
+        boolean isOwner = feedback.getAccount().getId().equals(currentUser.getId());
+        boolean isManagerOrStaff = currentUser.getRole().name().equals("MANAGER") || currentUser.getRole().name().equals("STAFF");
+
+        if (!isOwner && !isManagerOrStaff) {
+            throw new SecurityException("You are not allowed to delete this feedback");
+        }
+
+        feedbackRepository.deleteById(feedbackId);
+    }
+
 }

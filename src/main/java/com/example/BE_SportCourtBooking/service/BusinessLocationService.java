@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -205,5 +206,9 @@ public class BusinessLocationService {
                     .collect(Collectors.toSet()));
             return response;
         }).toList();
+    }
+
+    public List<BusinessLocation> getNearbyLocations(double lat, double lng, double radiusKm) {
+        return businessLocationRepo.findNearbyLocations(lat, lng, radiusKm);
     }
 }

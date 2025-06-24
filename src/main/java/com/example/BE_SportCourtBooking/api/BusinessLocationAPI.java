@@ -135,4 +135,15 @@ public class BusinessLocationAPI {
             return ResponseEntity.status(500).body(createResponse(500, false, "Get top 3 Business Locations error: ", e.getMessage()));
         }
     }
+
+    @GetMapping("/nearby")
+    public ResponseEntity<List<BusinessLocation>> getNearbyLocations(
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam(defaultValue = "5") double radiusKm
+    ) {
+        List<BusinessLocation> locations = businessLocationService.getNearbyLocations(lat, lng, radiusKm);
+        return ResponseEntity.ok(locations);
+    }
+
 }
