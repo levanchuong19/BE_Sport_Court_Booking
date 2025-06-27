@@ -1,5 +1,6 @@
 package com.example.BE_SportCourtBooking.entity;
 import com.example.BE_SportCourtBooking.entity.Enum.BookingStatus;
+import com.example.BE_SportCourtBooking.entity.Enum.PaymentMethod;
 import com.example.BE_SportCourtBooking.entity.Enum.PriceType;
 import com.example.BE_SportCourtBooking.entity.Enum.SlotStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -10,7 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.UUID;
@@ -68,8 +68,9 @@ public class Slot {
     @Enumerated(EnumType.STRING)
     BookingStatus bookingStatus ;
 
-    @Column(name = "price")
-    BigDecimal price;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", nullable = false)
+    PaymentMethod paymentMethod;
 
     @Column(name = "is_deleted")
     Boolean isDelete = false;

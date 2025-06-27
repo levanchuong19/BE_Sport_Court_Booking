@@ -41,14 +41,17 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
                                   @Param("startTime") String startTime,
                                   @Param("endTime") String endTime);
 
-    @Query("SELECT COUNT(s) FROM Slot s " +
-            "WHERE s.bookingStatus = 'PAID' " +
-            "AND DATE(s.createAt) = CURRENT_DATE")
+    @Query(value = "SELECT COUNT(*) FROM Slot s WHERE s.status = 'COMPLETED' AND DATE(s.create_at) = CURDATE()", nativeQuery = true)
     Long countTodayPaidBookings();
 
-    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s " +
-            "WHERE s.bookingStatus = 'PAID' " +
-            "AND DATE(s.createAt) = CURRENT_DATE")
+    @Query(
+            value = "SELECT COALESCE(SUM(p.amount), 0) " +
+                    "FROM slots s " +
+                    "JOIN payments p ON p.slot_id = s.id " +
+                    "WHERE p.status = 'COMPLETED' " +
+                    "AND DATE(s.create_at) = CURDATE()",
+            nativeQuery = true
+    )
     BigDecimal sumTodayPaidIncome();
 
     @Query("SELECT FUNCTION('DATE', s.startDate) AS bookingDate, COUNT(s) AS total " +
@@ -76,14 +79,14 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
 //    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s WHERE s.bookingStatus = 'PAID' AND FUNCTION('YEARWEEK', s.startDate, 1) = FUNCTION('YEARWEEK', CURRENT_DATE, 1)")
 //    BigDecimal revenueThisWeekAllCourt();
 
-    @Query("SELECT c.courtType, COALESCE(SUM(s.price), 0) " +
-            "FROM Slot s JOIN s.court c " +
-            "WHERE s.bookingStatus = 'PAID' " +
-            "AND FUNCTION('YEAR', s.startDate) = FUNCTION('YEAR', CURRENT_DATE) " +
-            "AND FUNCTION('MONTH', s.startDate) = FUNCTION('MONTH', CURRENT_DATE) " +
-            "GROUP BY c.courtType " +
-            "ORDER BY c.courtType")
-    List<Object[]> revenueThisMonthGroupByCourtType();
+//    @Query("SELECT c.courtType, COALESCE(SUM(s.price), 0) " +
+//            "FROM Slot s JOIN s.court c " +
+//            "WHERE s.bookingStatus = 'PAID' " +
+//            "AND FUNCTION('YEAR', s.startDate) = FUNCTION('YEAR', CURRENT_DATE) " +
+//            "AND FUNCTION('MONTH', s.startDate) = FUNCTION('MONTH', CURRENT_DATE) " +
+//            "GROUP BY c.courtType " +
+//            "ORDER BY c.courtType")
+//    List<Object[]> revenueThisMonthGroupByCourtType();
 
     @Query("SELECT COUNT(s) FROM Slot s WHERE s.bookingStatus = 'CANCELLED'")
     Long countCancelledBookings();

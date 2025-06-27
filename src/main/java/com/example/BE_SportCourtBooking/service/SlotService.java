@@ -61,7 +61,7 @@ public class SlotService {
 
 
     @Transactional
-    public String createSlot(SlotRequest slotRequest) {
+    public SlotResponse createSlot(SlotRequest slotRequest) {
         Account account = accountRepository.findAccountById(slotRequest.getAccount());
         if (account == null) {
             throw new EntityNotFoundException("Account not found");
@@ -92,6 +92,7 @@ public class SlotService {
         slot.setBookingStatus(BookingStatus.PENDING);
         slot.setStartDate(slotRequest.getStartDate());
         slot.setEndDate(slotRequest.getEndDate());
+        slot.setPaymentMethod(slotRequest.getPaymentMethod());
         slot.setCreateAt(new Date());
 
         try {
@@ -106,60 +107,62 @@ public class SlotService {
             slot.setStartTime(String.valueOf(Time.valueOf(openLocalTime)));
             slot.setEndTime(String.valueOf(Time.valueOf(closeLocalTime)));
 
-            BigDecimal  price = court.getPrices().stream()
-                    .filter(p -> p.getPriceType() == slotRequest.getSlotType())
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Court does not have a price for the selected slot type"))
-                    .getPrice();
+            return modelMapper.map(slotRepository.save(slot), SlotResponse.class);
 
-            long durationUnits = 0;
-            LocalDate startDate = slotRequest.getStartDate();
-            LocalDate endDate = slotRequest.getEndDate();
+//            BigDecimal  price = court.getPrices().stream()
+//                    .filter(p -> p.getPriceType() == slotRequest.getSlotType())
+//                    .findFirst()
+//                    .orElseThrow(() -> new IllegalArgumentException("Court does not have a price for the selected slot type"))
+//                    .getPrice();
+//
+//            long durationUnits = 0;
+//            LocalDate startDate = slotRequest.getStartDate();
+//            LocalDate endDate = slotRequest.getEndDate();
 
-            switch (slotRequest.getSlotType()) {
-                case HOURLY:
-                    long totalDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
-                    long hoursPerDay = ChronoUnit.HOURS.between(openLocalTime, closeLocalTime);
-                    durationUnits = totalDays * hoursPerDay;
-                    break;
-
-                case DAILY:
-                    durationUnits = ChronoUnit.DAYS.between(startDate, endDate) + 1;
-                    break;
-
-                case WEEKLY:
-                    durationUnits = ChronoUnit.WEEKS.between(startDate, endDate) + 1;
-                    break;
-
-                case MONTHLY:
-                    durationUnits = ChronoUnit.MONTHS.between(
-                            startDate.withDayOfMonth(1),
-                            endDate.withDayOfMonth(1)
-                    ) + 1;
-                    break;
-
-                default:
-                    throw new IllegalArgumentException("Unsupported slot type: " + slotRequest.getSlotType());
-            }
-
-            BigDecimal  totalPrice = price.multiply(BigDecimal.valueOf(durationUnits));
-            slot.setPrice(totalPrice);
-
-            Slot createdSlot = slotRepository.save(slot);
-            Payment payment = new Payment();
-            payment.setSlot(slot);
-            payment.setAmount(totalPrice);
-            payment.setType(PaymentType.BANKING);
-            payment.setStatus(PaymentStatus.PENDING);
-            payment.setVnpayTransactionId(UUID.randomUUID().toString());
-            payment.setCreateAt(new Date());
-            paymentRepository.save(payment);
-
-            try {
-                return createUrl(createdSlot);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+//            switch (slotRequest.getSlotType()) {
+//                case HOURLY:
+//                    long totalDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
+//                    long hoursPerDay = ChronoUnit.HOURS.between(openLocalTime, closeLocalTime);
+//                    durationUnits = totalDays * hoursPerDay;
+//                    break;
+//
+//                case DAILY:
+//                    durationUnits = ChronoUnit.DAYS.between(startDate, endDate) + 1;
+//                    break;
+//
+//                case WEEKLY:
+//                    durationUnits = ChronoUnit.WEEKS.between(startDate, endDate) + 1;
+//                    break;
+//
+//                case MONTHLY:
+//                    durationUnits = ChronoUnit.MONTHS.between(
+//                            startDate.withDayOfMonth(1),
+//                            endDate.withDayOfMonth(1)
+//                    ) + 1;
+//                    break;
+//
+//                default:
+//                    throw new IllegalArgumentException("Unsupported slot type: " + slotRequest.getSlotType());
+//            }
+//
+//            BigDecimal  totalPrice = price.multiply(BigDecimal.valueOf(durationUnits));
+//            slot.setPrice(totalPrice);
+//
+//            Slot createdSlot = slotRepository.save(slot);
+//            Payment payment = new Payment();
+//            payment.setSlot(slot);
+//            payment.setAmount(totalPrice);
+//            payment.setType(PaymentType.BANKING);
+//            payment.setStatus(PaymentStatus.PENDING);
+//            payment.setVnpayTransactionId(UUID.randomUUID().toString());
+//            payment.setCreateAt(new Date());
+//            paymentRepository.save(payment);
+//
+//            try {
+//                return createUrl(createdSlot);
+//            } catch (Exception e) {
+//                throw new RuntimeException(e);
+//            }
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Invalid time format for openTime or closeTime. Use HH:mm or HH:mm:ss.");
         }
@@ -198,165 +201,39 @@ public class SlotService {
         slotRepository.save(slot);
     }
 
-
-    public String createUrl(Slot slot) throws Exception {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        LocalDateTime createDate = LocalDateTime.now();
-        String formattedCreateDate = createDate.format(formatter);
-
-        //code minh`
-        BigDecimal amount = slot.getPrice().multiply(new BigDecimal("100"));//khử thập phân theo VNPay's requirement
-        String amountStr = amount.setScale(0, RoundingMode.HALF_UP).toPlainString();//ép về định dạng 0 dấu thập phân và ép về string để xóa dấu . thập phân
-
-        String tmnCode = "4OBLXBGN"; // Your VNPay TmnCode
-        String secretKey ="GJ8L3JFZNEC4ICPDZUMGJKKN2H5WORXK"; // Your VNPay secret key
-        String vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-        String returnUrl = "http://localhost:5173/success?bookingID=" + slot.getId();//trang thong bao thanh cong o Front End
-        String currCode = "VND";
-
-        Map<String, String> vnpParams = new TreeMap<>();
-        vnpParams.put("vnp_Version", "2.1.0");
-        vnpParams.put("vnp_Command", "pay");
-        vnpParams.put("vnp_TmnCode", tmnCode);
-        vnpParams.put("vnp_Locale", "vn");
-        vnpParams.put("vnp_CurrCode", currCode);
-        vnpParams.put("vnp_TxnRef", slot.getId().toString());
-        vnpParams.put("vnp_OrderInfo", "Thanh toan cho ma GD: " + slot.getId());
-        vnpParams.put("vnp_OrderType", "other");
-        vnpParams.put("vnp_Amount", amountStr);
-
-        vnpParams.put("vnp_ReturnUrl", returnUrl);
-        vnpParams.put("vnp_CreateDate", formattedCreateDate);
-        vnpParams.put("vnp_IpAddr", "128.199.178.23");
-
-        StringBuilder signDataBuilder = new StringBuilder();
-        for (Map.Entry<String, String> entry : vnpParams.entrySet()) {
-            signDataBuilder.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString()));
-            signDataBuilder.append("=");
-            signDataBuilder.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString()));
-            signDataBuilder.append("&");
-        }
-        signDataBuilder.deleteCharAt(signDataBuilder.length() - 1); // Remove last '&'
-
-        String signData = signDataBuilder.toString();
-        String signed = generateHMAC(secretKey, signData);
-
-        vnpParams.put("vnp_SecureHash", signed);
-
-        StringBuilder urlBuilder = new StringBuilder(vnpUrl);
-        urlBuilder.append("?");
-        for (Map.Entry<String, String> entry : vnpParams.entrySet()) {
-            urlBuilder.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString()));
-            urlBuilder.append("=");
-            urlBuilder.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString()));
-            urlBuilder.append("&");
-        }
-        urlBuilder.deleteCharAt(urlBuilder.length() - 1); // Remove last '&'
-
-        return urlBuilder.toString();
-    }
-
-    private String generateHMAC(String secretKey, String signData) throws NoSuchAlgorithmException, InvalidKeyException {
-        Mac hmacSha512 = Mac.getInstance("HmacSHA512");
-        SecretKeySpec keySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA512");
-        hmacSha512.init(keySpec);
-        byte[] hmacBytes = hmacSha512.doFinal(signData.getBytes(StandardCharsets.UTF_8));
-
-        StringBuilder result = new StringBuilder();
-        for (byte b : hmacBytes) {
-            result.append(String.format("%02x", b));
-        }
-        return result.toString();
-    }
-
-    public void createTransaction(UUID uuid) {
-        // Find the order
-        Slot slot = slotRepository.findSlotById(uuid);
+    public Slot updateSlot(UUID slotID, SlotRequest slotRequest) {
+        Slot slot = slotRepository.findSlotById(slotID);
         if (slot == null) {
-            throw new EntityNotFoundException("Slot not found with ID: " + uuid);
+            throw new EntityNotFoundException("Slot not found");
         }
-        Payment payment = paymentRepository.findBySlotId(uuid);
-        if (payment == null) {
-            throw new EntityNotFoundException("Payment not found for slot: " + uuid);
+        if (slot.getStatus() != SlotStatus.BOOKED) {
+            throw new IllegalArgumentException("Only booked slots can be updated");
         }
-        slot.setBookingStatus(BookingStatus.PAID);
-        slotRepository.save(slot);
-        payment.setStatus(PaymentStatus.COMPLETED);
-        Set<Transaction> transactionSet = new HashSet<>();
-
-        BigDecimal totalAmount = slot.getPrice();
-        BigDecimal commission = totalAmount.multiply(new BigDecimal("0.10")); // 10% commission
-        BigDecimal managerAmount = totalAmount.multiply(new BigDecimal("0.90")); // 90% to manager
-
-        Account customer = slot.getAccount();
-        if (customer == null) {
-            throw new EntityNotFoundException("Customer account not found for slot: " + uuid);
+        if(slotRequest.getEndDate().isBefore(slotRequest.getStartDate())) {
+            throw new IllegalArgumentException("End date must be after start date!");
         }
-        Account admin = accountRepository.findAccountByRole(Role.ADMIN);
-             if (admin == null){
-                 throw new EntityNotFoundException("Platform admin account not found");
-             }
-        Account manager = slot.getCourt().getCourtManager();
-        if (manager == null) {
-            throw new EntityNotFoundException("Court manager account not found for slot: " + uuid);
+        if(slotRequest.getSlotType() == PriceType.HOURLY && slotRequest.getStartDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("\n"+ "Đặt sân theo giờ phải ở trong tương lai!");
+        }
+        boolean isConflict = slotRepository.countOverlappingSlots(
+                slot.getCourt().getId(),slotRequest.getSlotType(),slotRequest.getStartDate(), slotRequest.getEndDate(),
+                slotRequest.getStartTime(), slotRequest.getEndTime()
+        );
+        if(isConflict) {
+            throw new IllegalArgumentException("Slot overlaps with an existing slot");
         }
 
-        // Create transaction 1
-        Transaction transaction1 = new Transaction();
-        transaction1.setPayment(payment);
-        transaction1.setFrom(null); // From VNPay
-        transaction1.setTo(customer);
-        transaction1.setAmount(totalAmount);
-        transaction1.setTransactionDate(new Date());
-        transaction1.setStatus(TransactionEnum.SUCCESS);
-        transaction1.setDescription("Payment from VNPay to customer for slot: " + uuid);
+        slot.setStartDate(slotRequest.getStartDate());
+        slot.setEndDate(slotRequest.getEndDate());
+        slot.setStartTime(slotRequest.getStartTime());
+        slot.setEndTime(slotRequest.getEndTime());
+        slot.setSlotType(slotRequest.getSlotType());
+        slot.setPaymentMethod(slotRequest.getPaymentMethod());
 
-        // Add to transaction set
-        transactionSet.add(transaction1);
-
-        // Create transaction 2
-        Transaction transaction2 = new Transaction();
-        transaction2.setTransactionDate(new Date());
-        transaction2.setFrom(customer);
-        transaction2.setTo(admin);
-        transaction2.setPayment(payment);
-        transaction2.setAmount(totalAmount);
-        transaction2.setStatus(TransactionEnum.SUCCESS);
-        transaction2.setDescription("Payment from customer to platform for slot: " + uuid);
-
-        transactionSet.add(transaction2);
-
-        // Create transaction 3
-        Transaction transaction3 = new Transaction();
-        transaction3.setPayment(payment);
-        transaction3.setFrom(admin);
-        transaction3.setTo(manager);
-        transaction3.setAmount(managerAmount);
-        transaction3.setTransactionDate(new Date());
-        transaction3.setStatus(TransactionEnum.SUCCESS);
-        transaction3.setDescription("Payment from platform to manager (90%) for slot: " + uuid);
-
-
-        // Add to transaction set
-        transactionSet.add(transaction3);
-
-        // Update balances
-        admin.setBalance(admin.getBalance().add(commission));
-        manager.setBalance(manager.getBalance().add(managerAmount));
-        // Save transactions and payment
-        payment.setTransactions(transactionSet);
-        try {
-            accountRepository.save(admin);
-            accountRepository.save(manager);
-            paymentRepository.save(payment); // Cascades to save transactions
-        } catch (Exception e) {
-            System.err.println("Error saving payment or transactions: " + e.getMessage());
-            throw new RuntimeException("Failed to save payment or transactions", e);
-        }
-        emailService.sendBookingConfirmationEmail(slot);
-        // Debugging output
-        System.out.println("Transactions to be saved: " + payment.getTransactions());
+        return slotRepository.save(slot);
     }
+
+
 
     @Transactional
     @Scheduled(fixedRate = 5 * 60 * 1000) // chạy mỗi 5 phút
@@ -420,21 +297,18 @@ public class SlotService {
                 );
                 LocalDateTime endDateTime = LocalDateTime.of(endDate, endTime);
 
-                // Chỉ xử lý nếu thời gian hiện tại vượt qua thời gian kết thúc và chưa gửi email
                 if (now.isAfter(endDateTime) && !slot.getReminderSent()) {
-                    // Cập nhật trạng thái slot
                     slot.setStatus(SlotStatus.COMPLETED);
                     slot.setBookingStatus(BookingStatus.COMPLETED);
-                    Slot updatedSlot = slotRepository.save(slot); // Lưu và lấy lại slot
-                    slotRepository.flush(); // Đảm bảo thay đổi được ghi ngay
+                    Slot updatedSlot = slotRepository.save(slot);
+                    slotRepository.flush();
 
                     // Gửi email cảm ơn
                     emailService.sendThankYouEmail(slot);
-                    updatedSlot.setReminderSent(true); // Cập nhật cờ sau khi gửi email thành công
+                    updatedSlot.setReminderSent(true);
                     slotRepository.save(updatedSlot);
                     slotRepository.flush();
 
-                    // Cập nhật trạng thái court
                     Court court = slot.getCourt();
                     if (court != null && court.getStatus() == CourtStatus.IN_USE) {
                         court.setStatus(CourtStatus.AVAILABLE);
