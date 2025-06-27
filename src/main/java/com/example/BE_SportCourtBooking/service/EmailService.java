@@ -74,15 +74,15 @@ public class EmailService {
     public void sendBookingConfirmationEmail(Slot slot) {
         String to = slot.getAccount().getEmail();
         String subject = "Đặt sân thành công!";
+//        "Chào %s,\n\nBạn đã đặt sân %s thành công từ %s đến %s (%s - %s).\n\nTổng tiền: %s VNĐ.\n\nTrân trọng!",
         String content = String.format(
-                "Chào %s,\n\nBạn đã đặt sân %s thành công từ %s đến %s (%s - %s).\n\nTổng tiền: %s VNĐ.\n\nTrân trọng!",
+                "Chào %s,\n\nBạn đã đặt sân %s thành công từ %s đến %s (%s - %s).\n\nTrân trọng!",
                 slot.getAccount().getFullName(),
                 slot.getCourt().getCourtName(),
                 slot.getStartDate(),
                 slot.getEndDate(),
                 slot.getStartTime(),
-                slot.getEndTime(),
-                slot.getPrice().toPlainString()
+                slot.getEndTime()
         );
 
         SimpleMailMessage message = new SimpleMailMessage();

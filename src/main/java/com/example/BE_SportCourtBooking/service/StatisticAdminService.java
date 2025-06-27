@@ -169,22 +169,22 @@ public class StatisticAdminService {
         }
     }
 
-    public Map<String, BigDecimal> getRevenueThisMonthGroupByCourtType() {
-        try {
-            Map<String, BigDecimal> result = new LinkedHashMap<>();
-            List<Object[]> records = slotRepository.revenueThisMonthGroupByCourtType();
-
-            for (Object[] record : records) {
-                String courtType = (String) record[0];
-                BigDecimal revenue = (record[1] != null) ? (BigDecimal) record[1] : BigDecimal.ZERO;
-                result.put(courtType, revenue);
-            }
-
-            return result;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get revenue grouped by court type for this month", e);
-        }
-    }
+//    public Map<String, BigDecimal> getRevenueThisMonthGroupByCourtType() {
+//        try {
+//            Map<String, BigDecimal> result = new LinkedHashMap<>();
+//            List<Object[]> records = slotRepository.revenueThisMonthGroupByCourtType();
+//
+//            for (Object[] record : records) {
+//                String courtType = (String) record[0];
+//                BigDecimal revenue = (record[1] != null) ? (BigDecimal) record[1] : BigDecimal.ZERO;
+//                result.put(courtType, revenue);
+//            }
+//
+//            return result;
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to get revenue grouped by court type for this month", e);
+//        }
+//    }
 
     public Map<String, Long> getCustomerAccountTodayYesterday() {
         try {
@@ -227,40 +227,40 @@ public class StatisticAdminService {
         }
     }
 
-    public Page<Map<String, Object>> getPaidBookingsAndRevenueWithManagerInfo(Pageable pageable) {
-        try {
-            return accountRepository.countTotalPaidBookingsAndRevenueWithManagerBasicInfo(pageable)
-                    .map(row -> {
-                        Map<String, Object> item = new LinkedHashMap<>();
-                        item.put("managerId", (UUID) row[0]);
-                        item.put("fullName", (String) row[1]);
-                        item.put("phone", (String) row[2]);
-                        item.put("totalBookings", ((Number) row[3]).longValue());
-                        item.put("totalRevenue", (BigDecimal) row[4]);
-                        return item;
-                    });
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get paid bookings and revenue with manager info", e);
-        }
-    }
+//    public Page<Map<String, Object>> getPaidBookingsAndRevenueWithManagerInfo(Pageable pageable) {
+//        try {
+//            return accountRepository.countTotalPaidBookingsAndRevenueWithManagerBasicInfo(pageable)
+//                    .map(row -> {
+//                        Map<String, Object> item = new LinkedHashMap<>();
+//                        item.put("managerId", (UUID) row[0]);
+//                        item.put("fullName", (String) row[1]);
+//                        item.put("phone", (String) row[2]);
+//                        item.put("totalBookings", ((Number) row[3]).longValue());
+//                        item.put("totalRevenue", (BigDecimal) row[4]);
+//                        return item;
+//                    });
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to get paid bookings and revenue with manager info", e);
+//        }
+//    }
 
 
-    public Page<Map<String, Object>> getAllCourtsWithManagerAndPaidStats(Pageable pageable) {
-        try {
-            return accountRepository.findAllCourtsWithManagerNameAndPaidBookingStats(pageable)
-                    .map(row -> {
-                        Map<String, Object> item = new LinkedHashMap<>();
-                        item.put("courtId", row[0]);
-                        item.put("courtName", (String) row[1]);
-                        item.put("managerName", (String) row[2]);
-                        item.put("totalPaidBookings", ((Number) row[3]).longValue());
-                        item.put("totalRevenue", (BigDecimal) row[4]);
-                        return item;
-                    });
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get courts with manager and paid booking stats", e);
-        }
-    }
+//    public Page<Map<String, Object>> getAllCourtsWithManagerAndPaidStats(Pageable pageable) {
+//        try {
+//            return accountRepository.findAllCourtsWithManagerNameAndPaidBookingStats(pageable)
+//                    .map(row -> {
+//                        Map<String, Object> item = new LinkedHashMap<>();
+//                        item.put("courtId", row[0]);
+//                        item.put("courtName", (String) row[1]);
+//                        item.put("managerName", (String) row[2]);
+//                        item.put("totalPaidBookings", ((Number) row[3]).longValue());
+//                        item.put("totalRevenue", (BigDecimal) row[4]);
+//                        return item;
+//                    });
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to get courts with manager and paid booking stats", e);
+//        }
+//    }
 
 
     public List<Map<String, Object>> getTop5CourtsByPaidBookings() {

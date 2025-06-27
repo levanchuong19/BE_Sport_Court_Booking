@@ -98,19 +98,19 @@ public class BookingSlotAPI {
         }
     }
 
-    @PostMapping("transaction/{slotId}")
-    public ResponseEntity<ApiResponse> createTransaction(@PathVariable UUID slotId) {
+    @PutMapping("update/{id}")
+    public ResponseEntity<ApiResponse> updateSlot(@PathVariable UUID id, @Valid @RequestBody SlotRequest slotRequest) {
         try {
-            slotService.createTransaction(slotId);
-            return ResponseEntity.ok(createResponse(200, true, "Create transaction successfully", null));
+            return ResponseEntity.ok(createResponse(200, true, "Update slot successfully", slotService.updateSlot(id, slotRequest)));
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(404).body(createResponse(404, false, "Create transaction error", e.getMessage()));
+            return ResponseEntity.status(404).body(createResponse(404, false, "Update slot error", e.getMessage()));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(createResponse(400, false, "Create transaction error", e.getMessage()));
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Update slot error", e.getMessage()));
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(403).body(createResponse(403, false, "Create transaction error", e.getMessage()));
+            return ResponseEntity.status(403).body(createResponse(403, false, "Update slot error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(createResponse(500, false, "Create transaction error", e.getMessage()));
+            return ResponseEntity.status(500).body(createResponse(500, false, "Update slot error", e.getMessage()));
         }
     }
+
 }

@@ -1,4 +1,5 @@
 package com.example.BE_SportCourtBooking.model.Request;
+import com.example.BE_SportCourtBooking.entity.Enum.PaymentMethod;
 import com.example.BE_SportCourtBooking.entity.Enum.PriceType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -41,6 +42,8 @@ public class SlotRequest {
             message = "End time must be in HH:mm or HH:mm:ss format!")
     String endTime;
 
-
+    @NotNull(message = "Payment method cannot be null!")
+    @Column(nullable = false)
+    PaymentMethod paymentMethod;
 
 }
