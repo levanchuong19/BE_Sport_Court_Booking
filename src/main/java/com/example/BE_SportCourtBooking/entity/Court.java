@@ -3,6 +3,7 @@ package com.example.BE_SportCourtBooking.entity;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -82,5 +83,9 @@ public class Court {
     @JoinColumn(name = "business_location_id", nullable = false)
     @NotNull(message = "Court must have a manager account!")
     BusinessLocation businessLocation;
+
+    @OneToMany(mappedBy = "court", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<CourtFeedback> feedbacks;
 
 }
