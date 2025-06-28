@@ -97,14 +97,22 @@ public class PaymentService {
                 throw new IllegalArgumentException("Unsupported price type: " + courtPricing.getPriceType());
         }
 
-        Payment payment = new Payment();
-        payment.setSlot(slotData);
-        BigDecimal amountVND = amount.setScale(0, RoundingMode.HALF_UP); // lưu DB
-        payment.setAmount(amountVND); // Store actual amount in VND
-        payment.setType(PaymentType.BANKING);
-        payment.setStatus(PaymentStatus.PENDING);
-        payment.setCreateAt(new Date());
-        paymentRepository.save(payment);
+        Optional<Payment> existingPayment = paymentRepository.findBySlotId(slotId);
+        if (existingPayment.isPresent() && existingPayment.get().getStatus() == PaymentStatus.PENDING) {
+            // Reuse existing payment
+        } else {
+            Payment payment = new Payment();
+            payment.setSlot(slotData);
+            BigDecimal amountVND = amount.setScale(0, RoundingMode.HALF_UP); // lưu DB
+            payment.setAmount(amountVND); // Store actual amount in VND
+            payment.setType(PaymentType.BANKING);
+            payment.setStatus(PaymentStatus.PENDING);
+            payment.setCreateAt(new Date());
+            paymentRepository.save(payment);
+            existingPayment = Optional.of(payment);
+        }
+
+
         // Convert amount for VNPay (multiply by 100, remove decimals)
         BigDecimal vnpayAmount = amount.multiply(new BigDecimal("100")).setScale(0, RoundingMode.HALF_UP);
         String amountStr = vnpayAmount.toPlainString();
@@ -118,7 +126,7 @@ public class PaymentService {
         String tmnCode = "4OBLXBGN"; // Your VNPay TmnCode
         String secretKey ="GJ8L3JFZNEC4ICPDZUMGJKKN2H5WORXK"; // Your VNPay secret key
         String vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-        String returnUrl = "http://localhost:5173/?success?bookingID=" + slotData.getId();//trang thong bao thanh cong o Front End
+        String returnUrl = "http://localhost:5173/?bookingID=" + slotData.getId();//trang thong bao thanh cong o Front End
         String currCode = "VND";
 
         Map<String, String> vnpParams = new TreeMap<>();
@@ -182,10 +190,12 @@ public class PaymentService {
         if (slot == null) {
             throw new EntityNotFoundException("Slot not found with ID: " + uuid);
         }
-        Payment payment = paymentRepository.findBySlotId(uuid);
-        if (payment == null) {
-            throw new EntityNotFoundException("Payment not found for slot: " + uuid);
-        }
+        System.out.println("Slot: " + slot);
+        Optional<Payment> paymentOptional = paymentRepository.findBySlotId(uuid);
+        System.out.println("Payment Optional: " + paymentOptional);
+        if (!paymentOptional.isPresent()) throw new EntityNotFoundException("Payment not found for slot: " + uuid);
+        Payment payment = paymentOptional.get();
+
         if (slot.getBookingStatus() != BookingStatus.PENDING) {
             throw new IllegalStateException("Slot is not in PENDING status");
         }
@@ -266,6 +276,7 @@ public class PaymentService {
             paymentRepository.save(payment); // Cascades to save transactions
         } catch (Exception e) {
             System.err.println("Error saving payment or transactions: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("Failed to save payment or transactions", e);
         }
         emailService.sendBookingConfirmationEmail(slot);

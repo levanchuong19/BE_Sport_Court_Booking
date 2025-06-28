@@ -31,15 +31,16 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
             @Param("isDelete") Boolean isDelete,
             Pageable pageable);
 
-    @Query("SELECT COUNT(s) > 0 FROM Slot s WHERE s.court.id = :courtId AND s.slotType = :slotType "
-            + "AND s.endDate >= :startDate AND s.startDate <= :endDate "
-            + "AND s.endTime > :startTime AND s.startTime < :endTime")
-    boolean countOverlappingSlots(@Param("courtId") UUID courtId,
-                                  @Param("slotType") PriceType slotType,
-                                  @Param("startDate") LocalDate startDate,
-                                  @Param("endDate") LocalDate endDate,
-                                  @Param("startTime") String startTime,
-                                  @Param("endTime") String endTime);
+    @Query("SELECT COUNT(s) FROM Slot s WHERE s.court.id = :courtId AND s.slotType = :slotType " +
+            "AND s.bookingStatus <> 'OVERDUE' " +
+            "AND s.endDate >= :startDate AND s.startDate <= :endDate " +
+            "AND s.endTime > :startTime AND s.startTime < :endTime")
+    long countOverlappingSlots(@Param("courtId") UUID courtId,
+                               @Param("slotType") PriceType slotType,
+                               @Param("startDate") LocalDate startDate,
+                               @Param("endDate") LocalDate endDate,
+                               @Param("startTime") String startTime,
+                               @Param("endTime") String endTime);
 
     @Query(value = "SELECT COUNT(*) FROM Slot s WHERE s.status = 'COMPLETED' AND DATE(s.create_at) = CURDATE()", nativeQuery = true)
     Long countTodayPaidBookings();

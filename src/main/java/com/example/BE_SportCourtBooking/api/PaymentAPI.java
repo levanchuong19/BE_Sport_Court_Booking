@@ -45,10 +45,13 @@ public class PaymentAPI {
             e.printStackTrace();
             return ResponseEntity.status(404).body(createResponse(404, false, "Create transaction error", e.getMessage()));
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(createResponse(400, false, "Create transaction error", e.getMessage()));
         } catch (IllegalStateException e) {
+            e.printStackTrace();
             return ResponseEntity.status(403).body(createResponse(403, false, "Create transaction error", e.getMessage()));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(500).body(createResponse(500, false, "Create transaction error", e.getMessage()));
         }
     }
