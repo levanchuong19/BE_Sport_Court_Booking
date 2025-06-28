@@ -54,7 +54,7 @@ public class Transaction {
 
     @Override
     public String toString() {
-        return "Transaction{id=" + id + ", transactionDate=" + transactionDate + ", status=" + status + ", description='" + description + "'}";
+        return "Transaction{id=" + id + ", transactionDate=" + transactionDate + ", status=" + status + ", description='" + description + "'', amount=\" + amount + \"}";
         // Omitting 'payment' to avoid recursion
     }
 

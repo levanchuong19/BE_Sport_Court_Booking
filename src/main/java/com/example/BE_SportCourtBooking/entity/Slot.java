@@ -27,6 +27,7 @@ public class Slot {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "customer_id")
+    @JsonIgnore
     Account account;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -77,5 +78,11 @@ public class Slot {
 
     @Column(name = "reminder_sent")
     Boolean reminderSent = false;
+
+    @Override
+    public String toString() {
+        return "Slot{id=" + id + ", startDate=" + startDate + ", endDate=" + endDate + ", bookingStatus=" + bookingStatus + "}";
+        // Exclude 'account' and 'court' to avoid recursion
+    }
 
 }

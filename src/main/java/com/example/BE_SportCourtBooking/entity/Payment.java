@@ -28,8 +28,8 @@ public class Payment {
 
     @NotNull(message = "Slot is required!")
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "slot_id", nullable = false)
-    @JsonIgnore
+    @JoinColumn(name = "slot_id", nullable = false, unique = true)
+//    @JsonIgnore
     Slot slot;
 
 
@@ -61,7 +61,7 @@ public class Payment {
 
     @Override
     public String toString() {
-        return "Payment{id=" + id + ", createAt=" + createAt + ", type=" +  type+ "}";
+        return "Payment{id=" + id + ", createAt=" + createAt + ", type=" +  type+ ", status=" + status + ", amount=" + amount +"}";
         // Omitting 'transactions' to avoid recursion
     }
     @Override

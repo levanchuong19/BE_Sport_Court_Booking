@@ -76,11 +76,12 @@ public class SlotService {
         if(slotRequest.getSlotType() == PriceType.HOURLY && slotRequest.getStartDate().isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("\n"+ "Đặt sân theo giờ phải ở trong tương lai!");
         }
-        boolean isConflict = slotRepository.countOverlappingSlots(
+        long  isConflict = slotRepository.countOverlappingSlots(
                 court.getId(),slotRequest.getSlotType(),slotRequest.getStartDate(), slotRequest.getEndDate(),
                 slotRequest.getStartTime(), slotRequest.getEndTime()
+
         );
-        if(isConflict) {
+        if(isConflict > 0) {
             throw new IllegalArgumentException("Slot overlaps with an existing slot");
         }
 
@@ -215,11 +216,11 @@ public class SlotService {
         if(slotRequest.getSlotType() == PriceType.HOURLY && slotRequest.getStartDate().isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("\n"+ "Đặt sân theo giờ phải ở trong tương lai!");
         }
-        boolean isConflict = slotRepository.countOverlappingSlots(
+        long  isConflict = slotRepository.countOverlappingSlots(
                 slot.getCourt().getId(),slotRequest.getSlotType(),slotRequest.getStartDate(), slotRequest.getEndDate(),
                 slotRequest.getStartTime(), slotRequest.getEndTime()
         );
-        if(isConflict) {
+        if(isConflict > 0) {
             throw new IllegalArgumentException("Slot overlaps with an existing slot");
         }
 
