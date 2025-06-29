@@ -3,6 +3,7 @@ package com.example.BE_SportCourtBooking.repository;
 import com.example.BE_SportCourtBooking.entity.Enum.PriceType;
 import com.example.BE_SportCourtBooking.entity.Enum.SlotStatus;
 import com.example.BE_SportCourtBooking.entity.Slot;
+import com.example.BE_SportCourtBooking.model.Response.BookingResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,22 @@ import java.util.UUID;
 
 public interface SlotRepository extends JpaRepository<Slot, UUID> {
     Slot findSlotById(UUID id);
+
+    List<Slot> findSlotByAccountId(UUID accountId);
+
+    @Query("""
+    SELECT new com.example.BE_SportCourtBooking.model.Response.BookingResponse(
+        s.id, s.startDate, s.endDate, s.startTime, s.endTime,
+        s.slotType, s.status, s.bookingStatus,
+        new com.example.BE_SportCourtBooking.model.Response.CourtResponse(c.id, c.courtType,c.courtName, c.description,c.status, null, null, c.yearBuild, c.length, c.width, c.maxPlayers, c.businessLocation)
+    )
+    FROM Slot s
+    JOIN s.court c
+    WHERE s.account.id = :accountId
+""")
+    List<BookingResponse> findBookingResponsesByAccountId(@Param("accountId") UUID accountId);
+
+
 
     @Query("SELECT s FROM Slot s WHERE s.bookingStatus = 'PENDING' AND s.createAt <= :timeLimit")
     List<Slot> findOverdueSlots(@Param("timeLimit") Timestamp timeLimit);

@@ -113,4 +113,18 @@ public class BookingSlotAPI {
         }
     }
 
+    @GetMapping("getBookingByAccount/{accountId}")
+    public ResponseEntity<ApiResponse> getBookingHistory(@PathVariable UUID accountId){
+        try {
+            return ResponseEntity.ok(createResponse(200, true, "Get Booking History successfully", slotService.getBookingHistory(accountId)));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Get Booking History error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Get Booking History error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false, "Get Booking History error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Get Booking History error", e.getMessage()));
+        }
+    }
 }
