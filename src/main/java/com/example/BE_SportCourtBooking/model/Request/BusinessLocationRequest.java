@@ -10,10 +10,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Data
 public class BusinessLocationRequest {
@@ -42,7 +39,18 @@ public class BusinessLocationRequest {
             message = "Close time must be in HH:mm or HH:mm:ss format!")
     String closeTime;
 
+    @NotNull(message = "Court number not null")
+    Integer CourtNum;
+
+    @NotNull(message = "Year build not null")
+    Integer yearBuild;
+
+    List<String> utilities;
+
+    String businessLicense;
+
     @NotNull(message = "Owner cannot be null!")
     UUID owner; // Giả định Account là chủ sở hữu địa điểm
+
 
 }

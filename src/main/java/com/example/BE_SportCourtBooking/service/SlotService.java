@@ -3,6 +3,9 @@ package com.example.BE_SportCourtBooking.service;
 import com.example.BE_SportCourtBooking.entity.*;
 import com.example.BE_SportCourtBooking.entity.Enum.*;
 import com.example.BE_SportCourtBooking.model.Request.SlotRequest;
+import com.example.BE_SportCourtBooking.model.Response.BookingHistoryResponse;
+import com.example.BE_SportCourtBooking.model.Response.BookingResponse;
+import com.example.BE_SportCourtBooking.model.Response.CourtResponse;
 import com.example.BE_SportCourtBooking.model.Response.SlotResponse;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
 import com.example.BE_SportCourtBooking.repository.CourtRepository;
@@ -35,6 +38,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class SlotService {
@@ -368,4 +372,51 @@ public class SlotService {
             }
         }
     }
+
+public BookingHistoryResponse getBookingHistory(UUID accountId) {
+    List<BookingResponse> bookingResponses = slotRepository.findBookingResponsesByAccountId(accountId);
+
+    int totalBooking = bookingResponses.size();
+
+    List<UUID> slotId = bookingResponses.stream().map(BookingResponse::getId).collect(Collectors.toList());
+
+    List<Payment> payments = paymentRepository.findBySlotIdIn(slotId);
+
+    BigDecimal totalSpending = payments.stream()
+            .map(Payment::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    Map<CourtType, Integer> courtTypeCount = new HashMap<>();
+    for (BookingResponse booking : bookingResponses) {
+        CourtType courtType = booking.getCourt().getCourtType();
+        courtTypeCount.put(courtType, courtTypeCount.getOrDefault(courtType, 0) + 1);
+    }
+
+    for (BookingResponse br : bookingResponses) {
+        CourtResponse court = br.getCourt();
+        Court fullCourt = courtRepository.findById(court.getId()).orElse(null);
+        if (fullCourt != null) {
+            List<CourtResponse.PriceResponse> priceResponses = fullCourt.getPrices().stream().map(p -> {
+                CourtResponse.PriceResponse pr = new CourtResponse.PriceResponse();
+                pr.setPriceType(p.getPriceType());
+                pr.setPrice(p.getPrice());
+                return pr;
+            }).collect(Collectors.toList());
+            court.setPrices(priceResponses);
+            court.setImages(fullCourt.getImages());
+        }
+    }
+
+    CourtType favoriteCourtType = null;
+    int maxCount = 0;
+    for (Map.Entry<CourtType, Integer> entry : courtTypeCount.entrySet()) {
+        if (entry.getValue() > maxCount) {
+            maxCount = entry.getValue();
+            favoriteCourtType = entry.getKey();
+        }
+    }
+
+    return new BookingHistoryResponse(bookingResponses, totalBooking, totalSpending, favoriteCourtType);
+
+}
 }

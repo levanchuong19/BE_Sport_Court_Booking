@@ -17,7 +17,7 @@ public class SlotResponse {
 
     UUID id;
     Account account;
-    Court court;
+    CourtResponse court;
     LocalDate startDate;
     LocalDate endDate;
     String startTime;
