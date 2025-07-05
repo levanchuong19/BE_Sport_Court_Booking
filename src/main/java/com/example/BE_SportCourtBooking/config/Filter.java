@@ -76,7 +76,6 @@ public class Filter extends OncePerRequestFilter {
             "/api/auth/register",
             "/api/auth/forgot-password",
             "/api/auth/change-password",
-            "/api/account",
             "/api/support/create",
             "/api/notifications/**",
             "/api/feedback/court/**",
