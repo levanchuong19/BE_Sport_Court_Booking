@@ -40,62 +40,201 @@ public class PaymentService {
     @Autowired
     EmailService emailService;
 
+//    public String createUrl(UUID slotId) throws Exception {
+//
+//        Slot slotData = slotRepository.findSlotById(slotId);
+//        if(slotData == null) {
+//            throw new EntityNotFoundException("Slot not found with ID: " + slotId);
+//        }
+//        if (slotData.getBookingStatus() != BookingStatus.PENDING) {
+//            throw new IllegalStateException("Slot is not in PENDING status");
+//        }
+//        //code minh`
+//        // Parse start and end times
+//        DateTimeFormatter timeFormatter = new DateTimeFormatterBuilder()
+//                .appendPattern("HH:mm")
+//                .optionalStart()
+//                .appendPattern(":ss")
+//                .optionalEnd()
+//                .toFormatter();
+//
+//        LocalDateTime start = LocalDateTime.of(slotData.getStartDate(),
+//                LocalTime.parse(slotData.getStartTime(), timeFormatter));
+//        LocalDateTime end = LocalDateTime.of(slotData.getEndDate(),
+//                LocalTime.parse(slotData.getEndTime(), timeFormatter));
+//
+//        // Calculate duration
+//        Duration duration = Duration.between(start, end);
+//        if (duration.isNegative()) {
+//            throw new IllegalArgumentException("End time must be after start time");
+//        }
+//        // Find matching CourtPricing
+//        CourtPricing courtPricing = slotData.getCourt().getPrices()
+//                .stream()
+//                .filter(p -> p.getPriceType() == slotData.getSlotType())
+//                .findFirst()
+//                .orElseThrow(() -> new IllegalArgumentException("No pricing found for slot type: " + slotData.getSlotType()));
+//        // Calculate amount based on priceType
+//        BigDecimal amount;
+//        switch (courtPricing.getPriceType()) {
+//            case HOURLY:
+//                double hours = duration.toMinutes() / 60.0; // Convert to hours (e.g., 90 minutes = 1.5 hours)
+//                amount = courtPricing.getPrice().multiply(new BigDecimal(hours));
+//                break;
+//            case DAILY:
+//                long days = ChronoUnit.DAYS.between(slotData.getStartDate(), slotData.getEndDate()) + 1; // Inclusive
+//                amount = courtPricing.getPrice().multiply(new BigDecimal(days));
+//                break;
+//            case WEEKLY:
+//                long weeks = ChronoUnit.WEEKS.between(slotData.getStartDate(), slotData.getEndDate()) + 1;
+//                amount = courtPricing.getPrice().multiply(new BigDecimal(weeks));
+//                break;
+//            case MONTHLY:
+//                long months = ChronoUnit.MONTHS.between(slotData.getStartDate(), slotData.getEndDate()) + 1;
+//                amount = courtPricing.getPrice().multiply(new BigDecimal(months));
+//                break;
+//            default:
+//                throw new IllegalArgumentException("Unsupported price type: " + courtPricing.getPriceType());
+//        }
+//
+//        Optional<Payment> existingPayment = paymentRepository.findBySlotId(slotId);
+//        if (existingPayment.isPresent() && existingPayment.get().getStatus() == PaymentStatus.PENDING) {
+//            // Reuse existing payment
+//        } else {
+//            Payment payment = new Payment();
+//            payment.setSlot(slotData);
+//            BigDecimal amountVND = amount.setScale(0, RoundingMode.HALF_UP); // lưu DB
+//            payment.setAmount(amountVND); // Store actual amount in VND
+//            payment.setType(PaymentType.BANKING);
+//            payment.setStatus(PaymentStatus.PENDING);
+//            payment.setCreateAt(new Date());
+//            paymentRepository.save(payment);
+//            existingPayment = Optional.of(payment);
+//        }
+//
+//
+//        // Convert amount for VNPay (multiply by 100, remove decimals)
+//        BigDecimal vnpayAmount = amount.multiply(new BigDecimal("100")).setScale(0, RoundingMode.HALF_UP);
+//        String amountStr = vnpayAmount.toPlainString();
+////        BigDecimal amount = slot.getCourt().getPrices().multiply(new BigDecimal("100"));//khử thập phân theo VNPay's requirement
+////        String amountStr = amount.setScale(0, RoundingMode.HALF_UP).toPlainString();//ép về định dạng 0 dấu thập phân và ép về string để xóa dấu . thập phân
+//
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+//        LocalDateTime createDate = LocalDateTime.now();
+//        String formattedCreateDate = createDate.format(formatter);
+//
+//        String tmnCode = "4OBLXBGN"; // Your VNPay TmnCode
+//        String secretKey ="GJ8L3JFZNEC4ICPDZUMGJKKN2H5WORXK"; // Your VNPay secret key
+//        String vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+//        String returnUrl = "http://localhost:5173/?bookingID=" + slotData.getId();//trang thong bao thanh cong o Front End
+//        String currCode = "VND";
+//
+//        Map<String, String> vnpParams = new TreeMap<>();
+//        vnpParams.put("vnp_Version", "2.1.0");
+//        vnpParams.put("vnp_Command", "pay");
+//        vnpParams.put("vnp_TmnCode", tmnCode);
+//        vnpParams.put("vnp_Locale", "vn");
+//        vnpParams.put("vnp_CurrCode", currCode);
+//        vnpParams.put("vnp_TxnRef", slotData.getId().toString());
+//        vnpParams.put("vnp_OrderInfo", "Thanh toan cho ma GD: " + slotData.getId());
+//        vnpParams.put("vnp_OrderType", "other");
+//        vnpParams.put("vnp_Amount", amountStr);
+//
+//        vnpParams.put("vnp_ReturnUrl", returnUrl);
+//        vnpParams.put("vnp_CreateDate", formattedCreateDate);
+//        vnpParams.put("vnp_IpAddr", "128.199.178.23");
+//
+//        StringBuilder signDataBuilder = new StringBuilder();
+//        for (Map.Entry<String, String> entry : vnpParams.entrySet()) {
+//            signDataBuilder.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString()));
+//            signDataBuilder.append("=");
+//            signDataBuilder.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString()));
+//            signDataBuilder.append("&");
+//        }
+//        signDataBuilder.deleteCharAt(signDataBuilder.length() - 1); // Remove last '&'
+//
+//        String signData = signDataBuilder.toString();
+//        String signed = generateHMAC(secretKey, signData);
+//
+//        vnpParams.put("vnp_SecureHash", signed);
+//
+//        StringBuilder urlBuilder = new StringBuilder(vnpUrl);
+//        urlBuilder.append("?");
+//        for (Map.Entry<String, String> entry : vnpParams.entrySet()) {
+//            urlBuilder.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString()));
+//            urlBuilder.append("=");
+//            urlBuilder.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString()));
+//            urlBuilder.append("&");
+//        }
+//        urlBuilder.deleteCharAt(urlBuilder.length() - 1); // Remove last '&'
+//
+//        return urlBuilder.toString();
+//    }
+
     public String createUrl(UUID slotId) throws Exception {
 
         Slot slotData = slotRepository.findSlotById(slotId);
-        if(slotData == null) {
+        if (slotData == null) {
             throw new EntityNotFoundException("Slot not found with ID: " + slotId);
         }
         if (slotData.getBookingStatus() != BookingStatus.PENDING) {
             throw new IllegalStateException("Slot is not in PENDING status");
         }
-        //code minh`
+
         // Parse start and end times
         DateTimeFormatter timeFormatter = new DateTimeFormatterBuilder()
-                .appendPattern("HH:mm")
+                .appendPattern("H:mm")
                 .optionalStart()
                 .appendPattern(":ss")
                 .optionalEnd()
                 .toFormatter();
 
-        LocalDateTime start = LocalDateTime.of(slotData.getStartDate(),
-                LocalTime.parse(slotData.getStartTime(), timeFormatter));
-        LocalDateTime end = LocalDateTime.of(slotData.getEndDate(),
-                LocalTime.parse(slotData.getEndTime(), timeFormatter));
+        LocalTime startTime = LocalTime.parse(slotData.getStartTime(), timeFormatter);
+        LocalTime endTime = LocalTime.parse(slotData.getEndTime(), timeFormatter);
+        LocalDateTime start = LocalDateTime.of(slotData.getStartDate(), startTime);
+        LocalDateTime end = LocalDateTime.of(slotData.getEndDate(), endTime);
 
-        // Calculate duration
-        Duration duration = Duration.between(start, end);
-        if (duration.isNegative()) {
+        Duration duration = Duration.between(startTime, endTime);
+        if (duration.isNegative() || duration.isZero()) {
             throw new IllegalArgumentException("End time must be after start time");
         }
-        // Find matching CourtPricing
+
         CourtPricing courtPricing = slotData.getCourt().getPrices()
                 .stream()
                 .filter(p -> p.getPriceType() == slotData.getSlotType())
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No pricing found for slot type: " + slotData.getSlotType()));
-        // Calculate amount based on priceType
+
         BigDecimal amount;
+        BigDecimal hoursPerDay = BigDecimal.valueOf(
+                Duration.between(
+                        LocalTime.parse(slotData.getStartTime(), timeFormatter),
+                        LocalTime.parse(slotData.getEndTime(), timeFormatter)
+                ).toMinutes()
+        ).divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
+
+        long totalDays = ChronoUnit.DAYS.between(slotData.getStartDate(), slotData.getEndDate()) + 1;
+
         switch (courtPricing.getPriceType()) {
             case HOURLY:
-                double hours = duration.toMinutes() / 60.0; // Convert to hours (e.g., 90 minutes = 1.5 hours)
-                amount = courtPricing.getPrice().multiply(new BigDecimal(hours));
+                amount = courtPricing.getPrice().multiply(hoursPerDay);
                 break;
+
             case DAILY:
-                long days = ChronoUnit.DAYS.between(slotData.getStartDate(), slotData.getEndDate()) + 1; // Inclusive
-                amount = courtPricing.getPrice().multiply(new BigDecimal(days));
+                amount = courtPricing.getPrice(); // giữ nguyên giá cố định theo ngày
                 break;
+
             case WEEKLY:
-                long weeks = ChronoUnit.WEEKS.between(slotData.getStartDate(), slotData.getEndDate()) + 1;
-                amount = courtPricing.getPrice().multiply(new BigDecimal(weeks));
-                break;
             case MONTHLY:
-                long months = ChronoUnit.MONTHS.between(slotData.getStartDate(), slotData.getEndDate()) + 1;
-                amount = courtPricing.getPrice().multiply(new BigDecimal(months));
+                // Tổng số giờ toàn bộ khoảng thời gian
+                BigDecimal totalHours = hoursPerDay.multiply(BigDecimal.valueOf(totalDays));
+                amount = courtPricing.getPrice().multiply(totalHours);
                 break;
+
             default:
                 throw new IllegalArgumentException("Unsupported price type: " + courtPricing.getPriceType());
         }
+
 
         Optional<Payment> existingPayment = paymentRepository.findBySlotId(slotId);
         if (existingPayment.isPresent() && existingPayment.get().getStatus() == PaymentStatus.PENDING) {
@@ -103,8 +242,8 @@ public class PaymentService {
         } else {
             Payment payment = new Payment();
             payment.setSlot(slotData);
-            BigDecimal amountVND = amount.setScale(0, RoundingMode.HALF_UP); // lưu DB
-            payment.setAmount(amountVND); // Store actual amount in VND
+            BigDecimal amountVND = amount.setScale(0, RoundingMode.HALF_UP);
+            payment.setAmount(amountVND);
             payment.setType(PaymentType.BANKING);
             payment.setStatus(PaymentStatus.PENDING);
             payment.setCreateAt(new Date());
@@ -112,21 +251,17 @@ public class PaymentService {
             existingPayment = Optional.of(payment);
         }
 
-
-        // Convert amount for VNPay (multiply by 100, remove decimals)
         BigDecimal vnpayAmount = amount.multiply(new BigDecimal("100")).setScale(0, RoundingMode.HALF_UP);
         String amountStr = vnpayAmount.toPlainString();
-//        BigDecimal amount = slot.getCourt().getPrices().multiply(new BigDecimal("100"));//khử thập phân theo VNPay's requirement
-//        String amountStr = amount.setScale(0, RoundingMode.HALF_UP).toPlainString();//ép về định dạng 0 dấu thập phân và ép về string để xóa dấu . thập phân
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         LocalDateTime createDate = LocalDateTime.now();
         String formattedCreateDate = createDate.format(formatter);
 
-        String tmnCode = "4OBLXBGN"; // Your VNPay TmnCode
-        String secretKey ="GJ8L3JFZNEC4ICPDZUMGJKKN2H5WORXK"; // Your VNPay secret key
+        String tmnCode = "4OBLXBGN";
+        String secretKey = "GJ8L3JFZNEC4ICPDZUMGJKKN2H5WORXK";
         String vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-        String returnUrl = "http://localhost:5173/?bookingID=" + slotData.getId();//trang thong bao thanh cong o Front End
+        String returnUrl = "http://localhost:5173/?bookingID=" + slotData.getId();
         String currCode = "VND";
 
         Map<String, String> vnpParams = new TreeMap<>();
@@ -139,7 +274,6 @@ public class PaymentService {
         vnpParams.put("vnp_OrderInfo", "Thanh toan cho ma GD: " + slotData.getId());
         vnpParams.put("vnp_OrderType", "other");
         vnpParams.put("vnp_Amount", amountStr);
-
         vnpParams.put("vnp_ReturnUrl", returnUrl);
         vnpParams.put("vnp_CreateDate", formattedCreateDate);
         vnpParams.put("vnp_IpAddr", "128.199.178.23");
@@ -151,11 +285,10 @@ public class PaymentService {
             signDataBuilder.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString()));
             signDataBuilder.append("&");
         }
-        signDataBuilder.deleteCharAt(signDataBuilder.length() - 1); // Remove last '&'
+        signDataBuilder.deleteCharAt(signDataBuilder.length() - 1);
 
         String signData = signDataBuilder.toString();
         String signed = generateHMAC(secretKey, signData);
-
         vnpParams.put("vnp_SecureHash", signed);
 
         StringBuilder urlBuilder = new StringBuilder(vnpUrl);
@@ -166,10 +299,11 @@ public class PaymentService {
             urlBuilder.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString()));
             urlBuilder.append("&");
         }
-        urlBuilder.deleteCharAt(urlBuilder.length() - 1); // Remove last '&'
+        urlBuilder.deleteCharAt(urlBuilder.length() - 1);
 
         return urlBuilder.toString();
     }
+
 
     private String generateHMAC(String secretKey, String signData) throws NoSuchAlgorithmException, InvalidKeyException {
         Mac hmacSha512 = Mac.getInstance("HmacSHA512");
