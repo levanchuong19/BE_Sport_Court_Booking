@@ -37,4 +37,24 @@ Page<BusinessLocation> findByFilters(@Param("name") String name,
             "GROUP BY bl " +
             "ORDER BY bookingCount DESC")
     List<Object[]> findTop3BusinessLocationsByBookingCount(Pageable pageable);
+
+    @Query(value = """
+        SELECT *, (
+            6371 * acos(
+                cos(radians(:lat)) * cos(radians(latitude)) *
+                cos(radians(longitude) - radians(:lng)) +
+                sin(radians(:lat)) * sin(radians(latitude))
+            )
+        ) AS distance
+        FROM business_location
+        WHERE is_deleted = false
+        HAVING distance <= :radius
+        ORDER BY distance
+        """, nativeQuery = true)
+    List<BusinessLocation> findNearbyLocations(
+            @Param("lat") double lat,
+            @Param("lng") double lng,
+            @Param("radius") double radius
+    );
+
 }

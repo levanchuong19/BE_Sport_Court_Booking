@@ -1,5 +1,6 @@
 package com.example.BE_SportCourtBooking.model.Response;
 
+import com.example.BE_SportCourtBooking.entity.Account;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -11,5 +12,6 @@ import lombok.experimental.FieldDefaults;
 public class GoogleLoginResponse {
     boolean authenticated;
     String token;
+    Account account;
 }
 
