@@ -81,7 +81,11 @@ public class Filter extends OncePerRequestFilter {
             "/api/account",
             "/api/support/create",
             "/api/notifications/**",
-            "/api/feedback/court/**"
+            "/api/feedback/court/**",
+            "/api/court/getAll",
+            "/api/location/getAll",
+            "/api/slot/getAll",
+            "/api/location/top3-BusinessLocations"
     );
 
     public boolean checkIsPublicAPI(String uri) {

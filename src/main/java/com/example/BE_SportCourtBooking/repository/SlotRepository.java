@@ -3,6 +3,7 @@ package com.example.BE_SportCourtBooking.repository;
 import com.example.BE_SportCourtBooking.entity.Enum.PriceType;
 import com.example.BE_SportCourtBooking.entity.Enum.SlotStatus;
 import com.example.BE_SportCourtBooking.entity.Slot;
+import com.example.BE_SportCourtBooking.model.Response.BookingResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,6 +19,22 @@ import java.util.UUID;
 public interface SlotRepository extends JpaRepository<Slot, UUID> {
     Slot findSlotById(UUID id);
 
+    List<Slot> findSlotByAccountId(UUID accountId);
+
+    @Query("""
+    SELECT new com.example.BE_SportCourtBooking.model.Response.BookingResponse(
+        s.id, s.startDate, s.endDate, s.startTime, s.endTime,
+        s.slotType, s.status, s.bookingStatus,
+        new com.example.BE_SportCourtBooking.model.Response.CourtResponse(c.id, c.courtType,c.courtName, c.description,c.status, null, null, c.yearBuild, c.length, c.width, c.maxPlayers, c.businessLocation)
+    )
+    FROM Slot s
+    JOIN s.court c
+    WHERE s.account.id = :accountId
+""")
+    List<BookingResponse> findBookingResponsesByAccountId(@Param("accountId") UUID accountId);
+
+
+
     @Query("SELECT s FROM Slot s WHERE s.bookingStatus = 'PENDING' AND s.createAt <= :timeLimit")
     List<Slot> findOverdueSlots(@Param("timeLimit") Timestamp timeLimit);
 
@@ -31,24 +48,28 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
             @Param("isDelete") Boolean isDelete,
             Pageable pageable);
 
-    @Query("SELECT COUNT(s) > 0 FROM Slot s WHERE s.court.id = :courtId AND s.slotType = :slotType "
-            + "AND s.endDate >= :startDate AND s.startDate <= :endDate "
-            + "AND s.endTime > :startTime AND s.startTime < :endTime")
-    boolean countOverlappingSlots(@Param("courtId") UUID courtId,
-                                  @Param("slotType") PriceType slotType,
-                                  @Param("startDate") LocalDate startDate,
-                                  @Param("endDate") LocalDate endDate,
-                                  @Param("startTime") String startTime,
-                                  @Param("endTime") String endTime);
+    @Query("SELECT COUNT(s) FROM Slot s WHERE s.court.id = :courtId AND s.slotType = :slotType " +
+            "AND s.bookingStatus <> 'OVERDUE' " +
+            "AND s.endDate >= :startDate AND s.startDate <= :endDate " +
+            "AND s.endTime > :startTime AND s.startTime < :endTime")
+    long countOverlappingSlots(@Param("courtId") UUID courtId,
+                               @Param("slotType") PriceType slotType,
+                               @Param("startDate") LocalDate startDate,
+                               @Param("endDate") LocalDate endDate,
+                               @Param("startTime") String startTime,
+                               @Param("endTime") String endTime);
 
-    @Query("SELECT COUNT(s) FROM Slot s " +
-            "WHERE s.bookingStatus = 'PAID' " +
-            "AND DATE(s.createAt) = CURRENT_DATE")
+    @Query(value = "SELECT COUNT(*) FROM Slot s WHERE s.status = 'COMPLETED' AND DATE(s.create_at) = CURDATE()", nativeQuery = true)
     Long countTodayPaidBookings();
 
-    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s " +
-            "WHERE s.bookingStatus = 'PAID' " +
-            "AND DATE(s.createAt) = CURRENT_DATE")
+    @Query(
+            value = "SELECT COALESCE(SUM(p.amount), 0) " +
+                    "FROM slots s " +
+                    "JOIN payments p ON p.slot_id = s.id " +
+                    "WHERE p.status = 'COMPLETED' " +
+                    "AND DATE(s.create_at) = CURDATE()",
+            nativeQuery = true
+    )
     BigDecimal sumTodayPaidIncome();
 
     @Query("SELECT FUNCTION('DATE', s.startDate) AS bookingDate, COUNT(s) AS total " +
@@ -76,14 +97,14 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
 //    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s WHERE s.bookingStatus = 'PAID' AND FUNCTION('YEARWEEK', s.startDate, 1) = FUNCTION('YEARWEEK', CURRENT_DATE, 1)")
 //    BigDecimal revenueThisWeekAllCourt();
 
-    @Query("SELECT c.courtType, COALESCE(SUM(s.price), 0) " +
-            "FROM Slot s JOIN s.court c " +
-            "WHERE s.bookingStatus = 'PAID' " +
-            "AND FUNCTION('YEAR', s.startDate) = FUNCTION('YEAR', CURRENT_DATE) " +
-            "AND FUNCTION('MONTH', s.startDate) = FUNCTION('MONTH', CURRENT_DATE) " +
-            "GROUP BY c.courtType " +
-            "ORDER BY c.courtType")
-    List<Object[]> revenueThisMonthGroupByCourtType();
+//    @Query("SELECT c.courtType, COALESCE(SUM(s.price), 0) " +
+//            "FROM Slot s JOIN s.court c " +
+//            "WHERE s.bookingStatus = 'PAID' " +
+//            "AND FUNCTION('YEAR', s.startDate) = FUNCTION('YEAR', CURRENT_DATE) " +
+//            "AND FUNCTION('MONTH', s.startDate) = FUNCTION('MONTH', CURRENT_DATE) " +
+//            "GROUP BY c.courtType " +
+//            "ORDER BY c.courtType")
+//    List<Object[]> revenueThisMonthGroupByCourtType();
 
     @Query("SELECT COUNT(s) FROM Slot s WHERE s.bookingStatus = 'CANCELLED'")
     Long countCancelledBookings();
@@ -100,4 +121,22 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
             @Param("end") String end
     );
 
+    @Query("SELECT s FROM Slot s WHERE s.status = :status " +
+            "AND s.isDelete = false " +
+            "AND s.bookingStatus != 'COMPLETED' " + // Loại bỏ slot đã hoàn tất
+            "AND (s.endDate < :currentTime OR (s.endDate = :currentTime AND s.endTime <= :currentTimeStr))")
+    List<Slot> findFinishedSlots(
+            @Param("status") SlotStatus status,
+            @Param("currentTime") LocalDate currentTime,
+            @Param("currentTimeStr") String currentTimeStr
+    );
+
+    @Query("SELECT s FROM Slot s WHERE s.status = :status " +
+            "AND s.isDelete = false " +
+            "AND (s.startDate = :currentDate AND s.startTime <= :currentTimeStr)")
+    List<Slot> findCheckedInSlots(
+            @Param("status") SlotStatus status,
+            @Param("currentDate") LocalDate currentDate,
+            @Param("currentTimeStr") String currentTimeStr
+    );
 }

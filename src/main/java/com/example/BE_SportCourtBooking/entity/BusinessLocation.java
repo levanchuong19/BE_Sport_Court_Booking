@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -58,6 +59,16 @@ public class BusinessLocation {
     String images;
 
     String description;
+
+    @NotNull(message = "Court number not null")
+    Integer CourtNum;
+
+    @NotNull(message = "Year build not null")
+    Integer yearBuild;
+
+    List<String> utilities;
+
+    String businessLicense;
 
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)

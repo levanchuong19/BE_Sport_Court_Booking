@@ -3,6 +3,7 @@ package com.example.BE_SportCourtBooking.model.Response;
 import com.example.BE_SportCourtBooking.entity.Court;
 import com.example.BE_SportCourtBooking.entity.Enum.LocationStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,6 +27,10 @@ public class BusinessLocationResponse {
     private String closeTime;
     private AccountResponse owner;
     Set<CourtResponse> courts;
+    Integer CourtNum;
+    Integer yearBuild;
+    List<String> utilities;
+    String businessLicense;
     Date createAt;
     LocationStatus status ;
     String images;

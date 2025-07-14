@@ -13,6 +13,7 @@ import com.example.BE_SportCourtBooking.repository.AccountRepository;
 import com.example.BE_SportCourtBooking.repository.BusinessLocationRepo;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotNull;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +50,7 @@ public class BusinessLocationService {
         if (account == null) {
             throw new IllegalArgumentException("Owner account not found");
         }
-        if (account.getRole() != Role.MANAGER && account.getRole() != Role.ADMIN) {
+        if (account.getRole() != Role.MANAGER && account.getRole() != Role.ADMIN && account.getRole() != Role.CUSTOMER) {
             throw new IllegalArgumentException("Only managers or admins can create a business location");
         }
         BusinessLocation businessLocation = new BusinessLocation();
@@ -59,6 +60,10 @@ public class BusinessLocationService {
         businessLocation.setDescription(request.getDescription());
         businessLocation.setStatus(LocationStatus.INACTIVE);
         businessLocation.setCreateAt(new java.util.Date());
+        businessLocation.setCourtNum(request.getCourtNum());
+        businessLocation.setYearBuild(request.getYearBuild());
+        businessLocation.setUtilities(request.getUtilities());
+        businessLocation.setBusinessLicense(request.getBusinessLicense());
         businessLocation.setOwner(account);
         try {
             // Chuẩn hóa định dạng: thêm ":00" nếu chỉ có HH:mm
@@ -162,6 +167,10 @@ public class BusinessLocationService {
         }
         businessLocation.setDescription(request.getDescription());
         businessLocation.setModifiedAt(new java.util.Date());
+        businessLocation.setCourtNum(request.getCourtNum());
+        businessLocation.setYearBuild(request.getYearBuild());
+        businessLocation.setUtilities(request.getUtilities());
+        businessLocation.setBusinessLicense(request.getBusinessLicense());
         businessLocation.setOwner(account);
         businessLocationRepo.save(businessLocation);
 
@@ -198,6 +207,10 @@ public class BusinessLocationService {
             response.setImages(businessLocation.getImages());
             response.setCreateAt(businessLocation.getCreateAt());
             response.setModifiedAt(businessLocation.getModifiedAt());
+            response.setCourtNum(businessLocation.getCourtNum());
+            response.setYearBuild(businessLocation.getYearBuild());
+            response.setUtilities(businessLocation.getUtilities());
+            response.setBusinessLicense(businessLocation.getBusinessLicense());
             response.setStatus(businessLocation.getStatus());
             Account owner = businessLocation.getOwner();
             response.setOwner(modelMapper.map(owner, AccountResponse.class));
@@ -208,7 +221,17 @@ public class BusinessLocationService {
         }).toList();
     }
 
-    public List<BusinessLocation> getNearbyLocations(double lat, double lng, double radiusKm) {
-        return businessLocationRepo.findNearbyLocations(lat, lng, radiusKm);
+    @Transactional
+    public BusinessLocationResponse activeBusinessLocation(UUID id) {
+        BusinessLocation businessLocation = businessLocationRepo.findBusinessLocationById(id);
+        if (businessLocation == null) {
+            throw new IllegalArgumentException("Business Location not found");
+        }
+        if (businessLocation.getStatus() != LocationStatus.INACTIVE) {
+            throw new IllegalArgumentException("Business Location is not allow inactive");
+        }
+        businessLocation.setStatus(LocationStatus.ACTIVE);
+        businessLocationRepo.save(businessLocation);
+        return modelMapper.map(businessLocation, BusinessLocationResponse.class);
     }
 }

@@ -62,7 +62,11 @@ public class SecurityConfig {
                                         "/api/account",
                                         "/api/support/create",
                                         "/api/notifications/**",
-                                        "/api/feedback/court/**"
+                                        "/api/feedback/court/**",
+                                        "/api/court/getAll",
+                                        "/api/location/getAll",
+                                        "/api/slot/getAll",
+                                        "/api/location/top3-BusinessLocations"
                                 ).permitAll()
                                 // Admin endpoints - require ROLE_ADMIN
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

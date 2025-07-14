@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -136,14 +137,19 @@ public class BusinessLocationAPI {
         }
     }
 
-    @GetMapping("/nearby")
-    public ResponseEntity<List<BusinessLocation>> getNearbyLocations(
-            @RequestParam double lat,
-            @RequestParam double lng,
-            @RequestParam(defaultValue = "5") double radiusKm
-    ) {
-        List<BusinessLocation> locations = businessLocationService.getNearbyLocations(lat, lng, radiusKm);
-        return ResponseEntity.ok(locations);
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("activeLocation/{id}")
+    public ResponseEntity<ApiResponse> activeBusinessLocation(@PathVariable UUID id) {
+        try {
+            BusinessLocationResponse updatedLocation = businessLocationService.activeBusinessLocation(id);
+            return ResponseEntity.ok(createResponse(200, true, "Business Location activated successfully", updatedLocation));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Business Location not found", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false, "Activate Business Location error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Activate Business Location error", e.getMessage()));
+        }
     }
 
 }
