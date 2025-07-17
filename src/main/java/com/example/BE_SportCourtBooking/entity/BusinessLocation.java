@@ -48,12 +48,12 @@ public class BusinessLocation {
             message = "Close time must be in HH:mm or HH:mm:ss format!")
     String closeTime;
 
-//    @NotNull(message = "Latitude cannot be null!")
-//    @Column(nullable = false)
+    @NotNull(message = "Latitude cannot be null!")
+    @Column(nullable = false)
     Double latitude;
 
-//    @NotNull(message = "Longitude cannot be null!")
-//    @Column(nullable = false)
+    @NotNull(message = "Longitude cannot be null!")
+    @Column(nullable = false)
     Double longitude;
 
     @CreationTimestamp
