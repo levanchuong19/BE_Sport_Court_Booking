@@ -27,4 +27,5 @@ public class BookingResponse {
     private BookingStatus bookingStatus;
     private CourtResponse court;
     private BigDecimal price;
+
 }

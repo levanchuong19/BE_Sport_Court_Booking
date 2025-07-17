@@ -38,6 +38,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -373,50 +374,64 @@ public class SlotService {
         }
     }
 
-public BookingHistoryResponse getBookingHistory(UUID accountId) {
-    List<BookingResponse> bookingResponses = slotRepository.findBookingResponsesByAccountId(accountId);
+    public BookingHistoryResponse getBookingHistory(UUID accountId) {
+        List<BookingResponse> bookingResponses = slotRepository.findBookingResponsesByAccountId(accountId);
 
-    int totalBooking = bookingResponses.size();
+        int totalBooking = bookingResponses.size();
 
-    List<UUID> slotId = bookingResponses.stream().map(BookingResponse::getId).collect(Collectors.toList());
+        // Tính tổng chi tiêu từ price trong BookingResponse
+        BigDecimal totalSpending = bookingResponses.stream()
+                .map(BookingResponse::getPrice)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-    List<Payment> payments = paymentRepository.findBySlotIdIn(slotId);
-
-    BigDecimal totalSpending = payments.stream()
-            .map(Payment::getAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-    Map<CourtType, Integer> courtTypeCount = new HashMap<>();
-    for (BookingResponse booking : bookingResponses) {
-        CourtType courtType = booking.getCourt().getCourtType();
-        courtTypeCount.put(courtType, courtTypeCount.getOrDefault(courtType, 0) + 1);
-    }
-
-    for (BookingResponse br : bookingResponses) {
-        CourtResponse court = br.getCourt();
-        Court fullCourt = courtRepository.findById(court.getId()).orElse(null);
-        if (fullCourt != null) {
-            List<CourtResponse.PriceResponse> priceResponses = fullCourt.getPrices().stream().map(p -> {
-                CourtResponse.PriceResponse pr = new CourtResponse.PriceResponse();
-                pr.setPriceType(p.getPriceType());
-                pr.setPrice(p.getPrice());
-                return pr;
-            }).collect(Collectors.toList());
-            court.setPrices(priceResponses);
-            court.setImages(fullCourt.getImages());
+        // Đếm loại sân yêu thích
+        Map<CourtType, Integer> courtTypeCount = new HashMap<>();
+        for (BookingResponse booking : bookingResponses) {
+            if (booking.getCourt() != null && booking.getCourt().getCourtType() != null) {
+                CourtType courtType = booking.getCourt().getCourtType();
+                courtTypeCount.put(courtType, courtTypeCount.getOrDefault(courtType, 0) + 1);
+            }
         }
-    }
 
-    CourtType favoriteCourtType = null;
-    int maxCount = 0;
-    for (Map.Entry<CourtType, Integer> entry : courtTypeCount.entrySet()) {
-        if (entry.getValue() > maxCount) {
-            maxCount = entry.getValue();
-            favoriteCourtType = entry.getKey();
+        // Lấy tất cả các sân trong một truy vấn duy nhất
+        List<UUID> courtIds = bookingResponses.stream()
+                .map(BookingResponse::getCourt)
+                .filter(Objects::nonNull)
+                .map(CourtResponse::getId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<Court> courts = courtIds.isEmpty() ? Collections.emptyList() : courtRepository.findAllById(courtIds);
+
+        // Tạo map để tra cứu nhanh
+        Map<UUID, Court> courtMap = courts.stream()
+                .collect(Collectors.toMap(Court::getId, Function.identity()));
+
+        // Cập nhật prices và images cho mỗi CourtResponse
+        for (BookingResponse br : bookingResponses) {
+            if (br.getCourt() != null) {
+                CourtResponse court = br.getCourt();
+                Court fullCourt = courtMap.get(court.getId());
+                if (fullCourt != null) {
+                    List<CourtResponse.PriceResponse> priceResponses = fullCourt.getPrices().stream()
+                            .map(p -> new CourtResponse.PriceResponse())
+                            .collect(Collectors.toList());
+                    court.setPrices(priceResponses);
+                    court.setImages(fullCourt.getImages());
+                }
+            }
         }
+
+        // Xác định loại sân yêu thích
+        CourtType favoriteCourtType = null;
+        int maxCount = 0;
+        for (Map.Entry<CourtType, Integer> entry : courtTypeCount.entrySet()) {
+            if (entry.getValue() > maxCount) {
+                maxCount = entry.getValue();
+                favoriteCourtType = entry.getKey();
+            }
+        }
+
+        return new BookingHistoryResponse(bookingResponses, totalBooking, totalSpending, favoriteCourtType);
     }
-
-    return new BookingHistoryResponse(bookingResponses, totalBooking, totalSpending, favoriteCourtType);
-
-}
 }
