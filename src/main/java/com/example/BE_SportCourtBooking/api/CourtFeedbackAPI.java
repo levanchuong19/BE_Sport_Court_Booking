@@ -30,7 +30,7 @@ public class CourtFeedbackAPI {
 
     // Tạo feedback mới
     @PostMapping
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('STAFF')")
     public ResponseEntity<ApiResponse> createFeedback(@Valid @RequestBody FeedbackRequest request) {
         CourtFeedback feedback = courtFeedbackService.createFeedback(request);
         return ResponseEntity.ok(createResponse(200, true, "Feedback submitted", feedback));
@@ -45,10 +45,17 @@ public class CourtFeedbackAPI {
 
     // Lấy feedback của user hiện tại
     @GetMapping("/me")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('STAFF')")
     public ResponseEntity<ApiResponse> getMyFeedbacks() {
         List<CourtFeedbackResponse> feedbacks = courtFeedbackService.getFeedbacksByCurrentAccount();
         return ResponseEntity.ok(createResponse(200, true, "Your feedbacks", feedbacks));
     }
 
+    // Xóa feedback theo ID (chỉ cho CUSTOMER, MANAGER, STAFF)
+    @DeleteMapping("/{feedbackId}")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('MANAGER') or hasRole('STAFF')")
+    public ResponseEntity<ApiResponse> deleteFeedback(@PathVariable UUID feedbackId) {
+        courtFeedbackService.deleteFeedbackById(feedbackId);
+        return ResponseEntity.ok(createResponse(200, true, "Feedback deleted successfully", null));
+    }
 }

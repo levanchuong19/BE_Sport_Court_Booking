@@ -14,6 +14,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,14 +24,17 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
 import java.security.SecureRandom;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class AuthenticationService implements UserDetailsService {
+
+    @Value("${google.client-id}")
+    private String googleClientId;
+
     @Autowired
     AccountRepository accountRepository;
 
@@ -49,36 +53,48 @@ public class AuthenticationService implements UserDetailsService {
     @Autowired
     EmailService emailService;
 
-    public AccountResponse register (RegisterRequest registerRequest){
-        Account account = modelMapper.map(registerRequest, Account.class);
-        try {
-            account.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-            account.setFullName(registerRequest.getFullName());
-            account.setRole(Role.CUSTOMER);
-            accountRepository.save(account);
-            EmailDetail emailDetail = new EmailDetail();
-            emailDetail.setAccount(account);
-            emailDetail.setSubject("Chào mừng bạn đến với SportZone");
-            emailDetail.setLink("http://localhost:5173/");
-            emailService.sendEmail(emailDetail);
-            return modelMapper.map(account, AccountResponse.class);
-        } catch (Exception e) {
-            if (e.getMessage().contains(account.getEmail())) {
-                throw new DuplicateEntity("Duplicated  email ");
-            } else {
-                throw new DuplicateEntity("Duplicated  phone ");
-            }
+    private GoogleIdTokenVerifier verifier;
+
+    @PostConstruct
+    public void initGoogleVerifier() {
+        verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
+                .setAudience(Collections.singletonList(googleClientId))
+                .build();
+    }
+
+    public AccountResponse register(RegisterRequest registerRequest) {
+        if (accountRepository.existsByEmail(registerRequest.getEmail())) {
+            throw new DuplicateEntity("Email already exists");
         }
+
+        if (accountRepository.existsByPhone(registerRequest.getPhone())) {
+            throw new DuplicateEntity("Phone number already exists");
+        }
+
+        Account account = modelMapper.map(registerRequest, Account.class);
+        account.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        account.setFullName(registerRequest.getFullName());
+        account.setRole(Role.CUSTOMER);
+
+        accountRepository.save(account);
+
+        EmailDetail emailDetail = new EmailDetail();
+        emailDetail.setAccount(account);
+        emailDetail.setSubject("Chào mừng bạn đến với SportZone");
+        emailDetail.setLink("http://localhost:5173/");
+        emailService.sendEmail(emailDetail);
+
+        return modelMapper.map(account, AccountResponse.class);
     }
 
 
-    public AccountResponse login (LoginRequest loginRequest){
+    public AccountResponse login(LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                     loginRequest.getPhone(),
                     loginRequest.getPassword()
             ));
-            Account account = (Account)authentication.getPrincipal();
+            Account account = (Account) authentication.getPrincipal();
             AccountResponse accountResponse = modelMapper.map(account, AccountResponse.class);
             accountResponse.setToken(tokenService.generateToken(account));
             return accountResponse;
@@ -113,29 +129,15 @@ public class AuthenticationService implements UserDetailsService {
         return account;
     }
 
-    private String generateRandomPassword(int length) {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder password = new StringBuilder();
-        Random random = new SecureRandom();
-        for (int i = 0; i < length; i++) {
-            password.append(chars.charAt(random.nextInt(chars.length())));
-        }
-        return password.toString();
-    }
-
-
     // send email, set new password for user
     public ForgotPasswordResponse forgotPassword(ForgotPasswordRequest request) {
         Account account = accountRepository.findAccountByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-        if (account == null) {
-            throw new RuntimeException("Account not found");
-        }
+                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
+
         String newPassword = generateRandomPassword(8);
         account.setPassword(passwordEncoder.encode(newPassword));
         accountRepository.save(account);
 
-        // Truyền thêm newPassword vào hàm gửi email
         emailService.sendEmailForgotPassword(account, newPassword);
 
         ForgotPasswordResponse response = new ForgotPasswordResponse();
@@ -144,55 +146,51 @@ public class AuthenticationService implements UserDetailsService {
     }
 
     public ChangePasswordResponse changePassword(ChangePasswordRequest request, UUID accountId) {
-        // Lấy account theo ID (hoặc từ security context)
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
 
-        // Kiểm tra mật khẩu hiện tại đúng không
         if (!passwordEncoder.matches(request.getPassword(), account.getPassword())) {
             throw new RuntimeException("Current password is incorrect");
         }
 
-        // Kiểm tra newPassword và confirmNewPassword giống nhau không
         if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
             throw new RuntimeException("New passwords do not match");
         }
 
-        // Cập nhật mật khẩu mới
         account.setPassword(passwordEncoder.encode(request.getNewPassword()));
         accountRepository.save(account);
 
         return new ChangePasswordResponse("Password changed successfully");
     }
 
-    // Adding Google Client ID o day
-    private final GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
-            .setAudience(Collections.singletonList("YOUR_GOOGLE_CLIENT_ID"))
-            .build();
-
     public GoogleLoginResponse authenticateWithGoogle(GoogleLoginRequest request) {
         try {
+            System.out.println("Frontend token: " + request.getToken());
             GoogleIdToken idToken = verifier.verify(request.getToken());
             if (idToken == null) {
-                throw new RuntimeException("ID token verification failed");
+                System.out.println("Token invalid or audience mismatch");
+                return null;
             }
 
             GoogleIdToken.Payload payload = idToken.getPayload();
             String email = payload.getEmail();
 
-            Account account = accountRepository.findAccountByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("Account not found"));
+            Account account = accountRepository.findAccountByEmail(email).orElse(null);
+
             if (account == null) {
-                // Create new account
+                String randomPassword = generateRandomPassword(12);
                 account = new Account();
                 account.setEmail(email);
                 account.setFullName((String) payload.get("name"));
-                account.setPassword(passwordEncoder.encode("12345")); // default password
-                account.setRole(Role.CUSTOMER); // default role
+                account.setPassword(passwordEncoder.encode(randomPassword));
+                account.setRole(Role.CUSTOMER);
                 account.setIsDelete(false);
                 accountRepository.save(account);
             }
-
+            //Login: Gán user vào context (nếu muốn dùng SecurityContext sau này)
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    account, null, account.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             if (Boolean.TRUE.equals(account.getIsDelete())) {
                 throw new RuntimeException("Account is marked as deleted");
             }
@@ -202,6 +200,7 @@ public class AuthenticationService implements UserDetailsService {
             return GoogleLoginResponse.builder()
                     .token(token)
                     .authenticated(true)
+                    .account(account)
                     .build();
 
         } catch (Exception e) {
@@ -209,4 +208,13 @@ public class AuthenticationService implements UserDetailsService {
         }
     }
 
+    private String generateRandomPassword(int length) {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%";
+        SecureRandom random = new SecureRandom();
+        StringBuilder password = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            password.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return password.toString();
+    }
 }
