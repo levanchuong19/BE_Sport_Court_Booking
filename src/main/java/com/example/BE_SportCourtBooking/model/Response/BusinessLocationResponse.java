@@ -26,6 +26,8 @@ public class BusinessLocationResponse {
     private String openTime;
     private String closeTime;
     private AccountResponse owner;
+    Double latitude;
+    Double longitude;
     Set<CourtResponse> courts;
     Integer CourtNum;
     Integer yearBuild;
@@ -36,4 +38,5 @@ public class BusinessLocationResponse {
     String images;
     String description;
     Date modifiedAt;
+    Double distance;
 }

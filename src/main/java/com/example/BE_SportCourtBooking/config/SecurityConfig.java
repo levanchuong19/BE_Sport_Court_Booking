@@ -63,6 +63,7 @@ public class SecurityConfig {
                                         "/api/court/getAll",
                                         "/api/location/getAll",
                                         "/api/slot/getAll",
+                                        "/api/search",
                                         "/api/location/top3-BusinessLocations"
                                 ).permitAll()
                                 // Admin endpoints - require ROLE_ADMIN

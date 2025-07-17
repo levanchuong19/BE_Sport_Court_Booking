@@ -62,6 +62,8 @@ public class BusinessLocationService {
         businessLocation.setCourtNum(request.getCourtNum());
         businessLocation.setYearBuild(request.getYearBuild());
         businessLocation.setUtilities(request.getUtilities());
+        businessLocation.setLatitude(request.getLatitude());
+        businessLocation.setLongitude(request.getLongitude());
         businessLocation.setBusinessLicense(request.getBusinessLicense());
         businessLocation.setOwner(account);
         try {
@@ -171,6 +173,8 @@ public class BusinessLocationService {
         businessLocation.setUtilities(request.getUtilities());
         businessLocation.setBusinessLicense(request.getBusinessLicense());
         businessLocation.setOwner(account);
+        businessLocation.setLatitude(request.getLatitude());
+        businessLocation.setLongitude(request.getLongitude());
         businessLocationRepo.save(businessLocation);
 
         return modelMapper.map(businessLocation, BusinessLocationResponse.class);
@@ -211,6 +215,8 @@ public class BusinessLocationService {
             response.setUtilities(businessLocation.getUtilities());
             response.setBusinessLicense(businessLocation.getBusinessLicense());
             response.setStatus(businessLocation.getStatus());
+            response.setLatitude(businessLocation.getLatitude());
+            response.setLongitude(businessLocation.getLongitude());
             Account owner = businessLocation.getOwner();
             response.setOwner(modelMapper.map(owner, AccountResponse.class));
             response.setCourts(businessLocation.getCourts().stream()
