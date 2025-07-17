@@ -28,6 +28,10 @@ public class BusinessLocationRequest {
     String images;
 
     String description;
+    @NotNull(message = "latitude cannot be null!")
+    Double latitude;
+    @NotNull(message = "Longitude cannot be null!")
+    Double longitude;
 
     @NotBlank(message = "Open time cannot be blank!")
     @Pattern(regexp = "^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$",

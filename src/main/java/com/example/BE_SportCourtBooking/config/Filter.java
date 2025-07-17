@@ -85,6 +85,7 @@ public class Filter extends OncePerRequestFilter {
             "/api/court/getAll",
             "/api/location/getAll",
             "/api/slot/getAll",
+            "/api/search",
             "/api/location/top3-BusinessLocations"
     );
 

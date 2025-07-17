@@ -109,12 +109,12 @@ public class AuthenticationService implements UserDetailsService {
         return accounts;
     }
 
-    public Account getCurrentAccount() {
+    public Account getCurrentAccount(){
         Account account = (Account) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return accountRepository.findAccountById(account.getId());
     }
 
-    public Account getAccount(UUID id) {
+    public Account getAccount(UUID id){
         Account account = accountRepository.findAccountById(id);
         if (account == null) throw new AccountNotFoundException("Account không tồn tại");
         return account;

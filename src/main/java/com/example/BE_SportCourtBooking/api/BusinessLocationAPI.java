@@ -151,5 +151,4 @@ public class BusinessLocationAPI {
             return ResponseEntity.status(500).body(createResponse(500, false, "Activate Business Location error", e.getMessage()));
         }
     }
-
 }

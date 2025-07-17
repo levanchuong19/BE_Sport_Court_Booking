@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 @Getter
@@ -25,4 +26,5 @@ public class BookingResponse {
     private SlotStatus status;
     private BookingStatus bookingStatus;
     private CourtResponse court;
+    private BigDecimal price;
 }

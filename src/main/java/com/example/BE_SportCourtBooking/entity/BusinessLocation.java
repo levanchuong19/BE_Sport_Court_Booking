@@ -48,6 +48,14 @@ public class BusinessLocation {
             message = "Close time must be in HH:mm or HH:mm:ss format!")
     String closeTime;
 
+    @NotNull(message = "Latitude cannot be null!")
+    @Column(nullable = false)
+    Double latitude;
+
+    @NotNull(message = "Longitude cannot be null!")
+    @Column(nullable = false)
+    Double longitude;
+
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at", updatable = false)
@@ -86,10 +94,6 @@ public class BusinessLocation {
 
     Boolean isDelete = false;
 
-    @Column(name = "latitude")
-    private Double latitude;
-
-    @Column(name = "longitude")
-    private Double longitude;
-
+    @Transient
+    private Double distance;
 }
