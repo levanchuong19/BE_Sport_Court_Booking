@@ -33,20 +33,21 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
 //""")
 //    List<BookingResponse> findBookingResponsesByAccountId(@Param("accountId") UUID accountId);
 
-    @Query(value = """
-    SELECT 
-        s.id AS slot_id,
-        s.start_date, s.end_date, s.start_time, s.end_time,
-        s.slot_type, s.status AS slot_status, s.booking_status,
-        p.amount,
-        c.id AS court_id, c.type, c.court_name, c.description,
-        c.status AS court_status, c.construction_year, c.length, c.width,
-        c.max_players, c.business_location_id
-    FROM slots s
-    JOIN courts c ON s.court_id = c.id
-    LEFT JOIN payments p ON p.slot_id = s.id
-    WHERE s.customer_id = :accountId
-""", nativeQuery = true)
+    @Query("""
+        SELECT new com.example.BE_SportCourtBooking.model.Response.BookingResponse(
+            s.id, s.startDate, s.endDate, s.startTime, s.endTime,
+            s.slotType, s.status, s.bookingStatus,
+            new com.example.BE_SportCourtBooking.model.Response.CourtResponse(
+                c.id, c.courtType, c.courtName, c.description, c.status, null, null,
+                c.yearBuild, c.length, c.width, c.maxPlayers, c.businessLocation
+            ),
+            p.amount
+        )
+        FROM Slot s
+        JOIN s.court c
+        LEFT JOIN Payment p WITH p.slot = s
+        WHERE s.account.id = :accountId
+    """)
     List<BookingResponse> findBookingResponsesByAccountId(@Param("accountId") UUID accountId);
 
     @Query("SELECT s FROM Slot s WHERE s.bookingStatus = 'PENDING' AND s.createAt <= :timeLimit")
