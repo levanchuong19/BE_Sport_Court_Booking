@@ -10,6 +10,7 @@ public class AccountResponse {
     String fullName;
     String email;
     String phone;
+    String image;
     Role role;
     String token;
 }
