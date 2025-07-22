@@ -74,7 +74,10 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
                                @Param("startTime") String startTime,
                                @Param("endTime") String endTime);
 
-    @Query(value = "SELECT COUNT(*) FROM Slot s WHERE s.status = 'COMPLETED' AND DATE(s.create_at) = CURDATE()", nativeQuery = true)
+    @Query(value = "SELECT COUNT(s.id) " +
+            "FROM slots s " +
+            "JOIN payments p ON p.slot_id = s.id " +
+            "WHERE p.status = 'COMPLETED' AND DATE(s.create_at) = CURDATE()", nativeQuery = true)
     Long countTodayPaidBookings();
 
     @Query(
@@ -87,17 +90,33 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
     )
     BigDecimal sumTodayPaidIncome();
 
-    @Query("SELECT FUNCTION('DATE', s.startDate) AS bookingDate, COUNT(s) AS total " +
-            "FROM Slot s " +
-            "WHERE s.bookingStatus = 'PAID' " +
-            "AND FUNCTION('YEARWEEK', s.startDate, 1) = FUNCTION('YEARWEEK', CURRENT_DATE, 1) " +
-            "GROUP BY FUNCTION('DATE', s.startDate) " +
-            "ORDER BY bookingDate")
+    @Query(value = "SELECT COUNT(s.id) " +
+            "FROM slots s " +
+            "JOIN payments p ON p.slot_id = s.id " +
+            "WHERE p.status = 'COMPLETED' AND DATE(p.payment_date) = DATE(CURDATE() - INTERVAL 1 DAY)",
+            nativeQuery = true)
+    Long countYesterdayPaidBookings();
+
+    @Query(value = "SELECT COALESCE(SUM(p.amount), 0) " +
+            "FROM slots s " +
+            "JOIN payments p ON p.slot_id = s.id " +
+            "WHERE p.status = 'COMPLETED' AND DATE(p.payment_date) = DATE(CURDATE() - INTERVAL 1 DAY)",
+            nativeQuery = true)
+    BigDecimal sumYesterdayPaidIncome();
+
+    @Query(value = "SELECT DATE(s.start_date) AS booking_date, COUNT(s.id) AS total " +
+            "FROM slots s " +
+            "JOIN payments p ON p.slot_id = s.id " +
+            "WHERE p.status = 'COMPLETED' " +
+            "AND YEARWEEK(s.start_date, 1) = YEARWEEK(CURRENT_DATE, 1) " +
+            "GROUP BY DATE(s.start_date) " +
+            "ORDER BY booking_date", nativeQuery = true)
     List<Object[]> countPaidBookingsPerDayThisWeek();
 
-    @Query(value = "SELECT MONTH(s.start_date) AS month, COUNT(*) AS total " +
+    @Query(value = "SELECT MONTH(s.start_date) AS month, COUNT(s.id) AS total " +
             "FROM slots s " +
-            "WHERE s.booking_status = 'PAID' " +
+            "JOIN payments p ON p.slot_id = s.id " +
+            "WHERE p.status = 'COMPLETED' " +
             "AND YEAR(s.start_date) = YEAR(CURRENT_DATE) " +
             "GROUP BY MONTH(s.start_date) " +
             "ORDER BY month", nativeQuery = true)
@@ -112,14 +131,25 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
 //    @Query("SELECT COALESCE(SUM(s.price), 0) FROM Slot s WHERE s.bookingStatus = 'PAID' AND FUNCTION('YEARWEEK', s.startDate, 1) = FUNCTION('YEARWEEK', CURRENT_DATE, 1)")
 //    BigDecimal revenueThisWeekAllCourt();
 
-//    @Query("SELECT c.courtType, COALESCE(SUM(s.price), 0) " +
-//            "FROM Slot s JOIN s.court c " +
-//            "WHERE s.bookingStatus = 'PAID' " +
-//            "AND FUNCTION('YEAR', s.startDate) = FUNCTION('YEAR', CURRENT_DATE) " +
-//            "AND FUNCTION('MONTH', s.startDate) = FUNCTION('MONTH', CURRENT_DATE) " +
-//            "GROUP BY c.courtType " +
-//            "ORDER BY c.courtType")
-//    List<Object[]> revenueThisMonthGroupByCourtType();
+    @Query(value = "SELECT " +
+            "    c.type, " +
+            "    COALESCE(SUM(p.amount), 0) AS total_revenue " +
+            "FROM " +
+            "    courts c " +
+            "JOIN " +
+            "    slots s ON c.id = s.court_id " +
+            "JOIN " +
+            "    payments p ON s.id = p.slot_id " +
+            "WHERE " +
+            "    p.status = 'COMPLETED' " +
+            "    AND YEAR(p.payment_date) = YEAR(CURRENT_DATE) " +
+            "    AND MONTH(p.payment_date) = MONTH(CURRENT_DATE) " +
+            "GROUP BY " +
+            "    c.type " +
+            "ORDER BY " +
+            "    total_revenue DESC",
+            nativeQuery = true)
+    List<Object[]> revenueThisMonthGroupByCourtType();
 
     @Query("SELECT COUNT(s) FROM Slot s WHERE s.bookingStatus = 'CANCELLED'")
     Long countCancelledBookings();

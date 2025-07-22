@@ -41,10 +41,11 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
     Page<Court> findCourtsByBusinessLocationId(@Param("businessLocationId") UUID businessLocationId,
                                                                   @Param("isDelete") Boolean isDelete,
                                                                   Pageable pageable);
-    @Query(value = "SELECT c.court_name, COUNT(s.id) AS totalPaidBookings " +
+    @Query(value = "SELECT c.court_name, COUNT(p.id) AS totalPaidBookings " +
             "FROM courts c " +
             "JOIN slots s ON s.court_id = c.id " +
-            "WHERE s.booking_status = 'PAID' " +
+            "JOIN payments p ON p.slot_id = s.id " +
+            "WHERE p.status = 'COMPLETED' " +
             "GROUP BY c.court_name " +
             "ORDER BY totalPaidBookings DESC " +
             "LIMIT 5", nativeQuery = true)
@@ -55,4 +56,26 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
             "GROUP BY c " +
             "ORDER BY bookingCount DESC")
     List<Object[]> findTop3CourtsByBookingCount();
+
+    @Query(value = "SELECT " +
+            "    c.court_name AS courtName, " +
+            "    a.full_name AS managerName, " +
+            "    COUNT(s.id) AS totalBookings, " +
+            "    COALESCE(SUM(CASE WHEN p.status = 'COMPLETED' THEN p.amount ELSE 0 END), 0) AS totalRevenue " +
+            "FROM " +
+            "    courts c " +
+            "LEFT JOIN " +
+            "    accounts a ON c.manager_id = a.id " +
+            "LEFT JOIN " +
+            "    slots s ON c.id = s.court_id " +
+            "LEFT JOIN " +
+            "    payments p ON s.id = p.slot_id " +
+            "WHERE " +
+            "    c.is_deleted = false " +
+            "GROUP BY " +
+            "    c.id, c.court_name, a.full_name " +
+            "ORDER BY " +
+            "    totalRevenue DESC",
+            nativeQuery = true)
+    List<Object[]> getCourtStatistics();
 }

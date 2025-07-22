@@ -15,7 +15,9 @@ import java.util.UUID;
 
 public interface AccountRepository extends JpaRepository<Account, UUID> {
     boolean existsByEmail(String email);
+
     boolean existsByPhone(String phone);
+
     Account findAccountById(UUID id);
 
     Account findAccountByPhone(String phone);
@@ -30,34 +32,19 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
     @Query("SELECT COUNT(acc) FROM Account acc WHERE acc.role = :role AND acc.isDelete = false")
     Long countAccountsByRole(@Param("role") Role role);
 
-    @Query(value = """
-    SELECT COUNT(*) FROM accounts
-    WHERE created_at >= CURDATE()
-      AND created_at < CURDATE() + INTERVAL 1 DAY
-      AND is_deleted = false
-    """, nativeQuery = true)
+    @Query("SELECT COUNT(a) FROM Account a WHERE DATE(a.createAt) = CURRENT_DATE AND a.isDelete = false")
     Long countNewAccountsToday();
 
-    @Query(value = """
-    SELECT COUNT(*) FROM accounts
-    WHERE created_at >= STR_TO_DATE(CONCAT(YEAR(CURDATE()), WEEK(CURDATE(), 1), ' Monday'), '%X%V %W')
-      AND created_at < STR_TO_DATE(CONCAT(YEAR(CURDATE()), WEEK(CURDATE(), 1) + 1, ' Monday'), '%X%V %W')
-      AND is_deleted = false
-    """, nativeQuery = true)
+    @Query("SELECT COUNT(a) FROM Account a WHERE FUNCTION('YEARWEEK', a.createAt, 1) = FUNCTION('YEARWEEK', CURRENT_DATE, 1) AND a.isDelete = false")
     Long countNewAccountsThisWeek();
 
-    @Query(value = """
-    SELECT COUNT(*) FROM accounts
-    WHERE created_at >= DATE_FORMAT(CURDATE() ,'%Y-%m-01')
-      AND created_at < DATE_FORMAT(CURDATE() + INTERVAL 1 MONTH, '%Y-%m-01')
-      AND is_deleted = false
-    """, nativeQuery = true)
+    @Query("SELECT COUNT(a) FROM Account a WHERE FUNCTION('YEAR', a.createAt) = FUNCTION('YEAR', CURRENT_DATE) AND FUNCTION('MONTH', a.createAt) = FUNCTION('MONTH', CURRENT_DATE) AND a.isDelete = false")
     Long countNewAccountsThisMonth();
 
     @Query("SELECT COUNT(a) FROM Account a WHERE a.isDelete = false")
     Long countActiveAccounts();
 
-    @Query("SELECT COUNT(a) FROM Account a WHERE a.isDelete = true")
+    @Query(value = "SELECT COUNT(a) FROM Account a WHERE a.isDelete = true")
     Long countDeletedAccounts();
 
     @Query("SELECT COUNT(a) FROM Account a " +
@@ -80,24 +67,33 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
             "ORDER BY month", nativeQuery = true)
     List<Object[]> countNewManagersPerMonthThisYear();
 
-    @Query(value = "SELECT a.id AS manager_id, a.full_name, a.phone, " +
-            "COUNT(s.id) AS total_bookings, COALESCE(SUM(s.price), 0) AS total_revenue " +
-            "FROM slots s " +
-            "JOIN courts c ON s.court_id = c.id " +
-            "JOIN accounts a ON c.manager_id = a.id " +
-            "WHERE s.booking_status = 'PAID' " +
-            "AND a.role = 'MANAGER' " +
-            "GROUP BY a.id, a.full_name, a.phone " +
-            "ORDER BY a.id \n-- #pageable\n",
-            countQuery = "SELECT COUNT(DISTINCT a.id) " +
-                    "FROM slots s " +
-                    "JOIN courts c ON s.court_id = c.id " +
-                    "JOIN accounts a ON c.manager_id = a.id " +
-                    "WHERE s.booking_status = 'PAID' " +
-                    "AND a.role = 'MANAGER'",
-            nativeQuery = true)
-    Page<Object[]> countTotalPaidBookingsAndRevenueWithManagerBasicInfo(Pageable pageable);
+    @Query(
+            value = "SELECT " +
+                    "    a.id AS managerId, " +
+                    "    a.full_name AS fullName, " +
+                    "    a.phone AS phone, " +
+                    "    COUNT(DISTINCT CASE WHEN p.status = 'COMPLETED' THEN s.id END) AS totalBookings, " +
+                    "    COALESCE(SUM(CASE WHEN p.status = 'COMPLETED' THEN p.amount ELSE 0 END), 0) AS totalRevenue " +
+                    "FROM " +
+                    "    accounts a " +
+                    "LEFT JOIN " +
+                    "    courts c ON a.id = c.manager_id " +
+                    "LEFT JOIN " +
+                    "    slots s ON c.id = s.court_id " +
+                    "LEFT JOIN " +
+                    "    payments p ON s.id = p.slot_id " +
+                    "WHERE " +
+                    "    a.role = 'MANAGER' " +
+                    "GROUP BY " +
+                    "    a.id, a.full_name, a.phone " +
+                    "ORDER BY " +
+                    "    totalRevenue DESC",
 
+            countQuery = "SELECT COUNT(*) FROM accounts a WHERE a.role = 'MANAGER'", // <-- countQuery tùy chỉnh
+
+            nativeQuery = true
+    )
+    Page<Object[]> getManagerStatistics(Pageable pageable);
 
 
     @Query(value = "SELECT c.id, c.court_name, a.full_name, " +
