@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,10 +29,16 @@ public class CourtFeedbackAPI {
 
     // Tạo feedback mới
     @PostMapping
-    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('STAFF')")
     public ResponseEntity<ApiResponse> createFeedback(@Valid @RequestBody FeedbackRequest request) {
         CourtFeedback feedback = courtFeedbackService.createFeedback(request);
         return ResponseEntity.ok(createResponse(200, true, "Feedback submitted", feedback));
+    }
+
+    // Lấy tất cả feedback
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse> getAllFeedbacks() {
+        List<CourtFeedbackResponse> feedbacks = courtFeedbackService.getAllFeedbacks();
+        return ResponseEntity.ok(createResponse(200, true, "All feedbacks fetched", feedbacks));
     }
 
     // Lấy feedback theo sân
@@ -43,17 +48,22 @@ public class CourtFeedbackAPI {
         return ResponseEntity.ok(createResponse(200, true, "Feedbacks found", feedbacks));
     }
 
+    // Lấy 3 feedback random từ tất cả
+    @GetMapping("/random")
+    public ResponseEntity<ApiResponse> getRandomFeedbacks() {
+        List<CourtFeedbackResponse> feedbacks = courtFeedbackService.getRandomFeedbacks(3);
+        return ResponseEntity.ok(createResponse(200, true, "Random feedbacks found", feedbacks));
+    }
+
     // Lấy feedback của user hiện tại
     @GetMapping("/me")
-    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('STAFF')")
     public ResponseEntity<ApiResponse> getMyFeedbacks() {
         List<CourtFeedbackResponse> feedbacks = courtFeedbackService.getFeedbacksByCurrentAccount();
         return ResponseEntity.ok(createResponse(200, true, "Your feedbacks", feedbacks));
     }
 
-    // Xóa feedback theo ID (chỉ cho CUSTOMER, MANAGER, STAFF)
+    // Xóa feedback theo ID
     @DeleteMapping("/{feedbackId}")
-    @PreAuthorize("hasRole('CUSTOMER') or hasRole('MANAGER') or hasRole('STAFF')")
     public ResponseEntity<ApiResponse> deleteFeedback(@PathVariable UUID feedbackId) {
         courtFeedbackService.deleteFeedbackById(feedbackId);
         return ResponseEntity.ok(createResponse(200, true, "Feedback deleted successfully", null));

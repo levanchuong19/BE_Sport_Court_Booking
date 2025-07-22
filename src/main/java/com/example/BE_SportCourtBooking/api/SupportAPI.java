@@ -31,7 +31,7 @@ public class SupportAPI {
     }
 
     @GetMapping("getAll")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     @SecurityRequirement(name = "api")
     public ResponseEntity<ApiResponse> getAllSupport() {
         List<SupportResponse> supportResponse = supportService.getAllFeedback();
@@ -39,7 +39,7 @@ public class SupportAPI {
     }
 
     @GetMapping("getByID/{supportId}")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     @SecurityRequirement(name = "api")
     public ResponseEntity<ApiResponse> getSupportById(@PathVariable UUID supportId) {
         SupportResponse supportResponse = supportService.getFeedbackById(supportId);
@@ -47,7 +47,7 @@ public class SupportAPI {
     }
 
     @DeleteMapping("delete/{supportId}")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     @SecurityRequirement(name = "api")
     public ResponseEntity<ApiResponse> deleteSupport(@PathVariable("supportId") UUID id) {
         SupportResponse support = supportService.deleteSupport(id);

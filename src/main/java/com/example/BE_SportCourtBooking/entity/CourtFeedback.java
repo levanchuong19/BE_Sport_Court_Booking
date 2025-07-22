@@ -21,7 +21,7 @@ public class CourtFeedback {
     private UUID id;
 
     @Column(nullable = false)
-    private int overallRating; // ⭐ tổng điểm 1-5
+    private float overallRating; // tổng điểm 1-5
 
     @Column(columnDefinition = "TEXT")
     private String comment; // Nội dung đánh giá
@@ -36,8 +36,6 @@ public class CourtFeedback {
     private int bookingExperienceRating;
 
     private LocalDate playedDate;
-
-    private boolean anonymous;
 
     // Liên kết đến người dùng đánh giá
     @ManyToOne(fetch = FetchType.LAZY)

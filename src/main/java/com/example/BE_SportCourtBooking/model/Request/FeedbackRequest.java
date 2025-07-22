@@ -17,7 +17,7 @@ public class FeedbackRequest {
     private int cleanlinessRating;
     private int bookingExperienceRating;
     private LocalDate playedDate;
-    private boolean anonymous;
 
     private UUID courtId;
+    private UUID accountId;
 }
