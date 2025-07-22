@@ -12,6 +12,7 @@ import java.util.Date;
 public class UpdateAccountRequest {
     String fullName;
     Date dateOfBirth;
+    String phone;
     String gender;
     String address;
     String image;

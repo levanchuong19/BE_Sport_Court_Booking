@@ -36,6 +36,7 @@ public class AccountAPI {
     }
 
     @PutMapping("{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     public ResponseEntity<Account> update(@Valid @RequestBody UpdateAccountRequest updateAccountRequest, @PathVariable UUID id) {
         Account updatedAccount = accountService.updateAccount(updateAccountRequest, id);
         return ResponseEntity.ok(updatedAccount);
