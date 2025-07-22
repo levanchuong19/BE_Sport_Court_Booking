@@ -12,12 +12,13 @@ import com.example.BE_SportCourtBooking.repository.CourtRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,19 +31,30 @@ public class CourtFeedbackService {
 
     AccountRepository accountRepository;
 
-    ModelMapper modelMapper = new ModelMapper();
+    private final CourtFeedbackRepository courtFeedbackRepository;
 
     public CourtFeedback createFeedback(FeedbackRequest request) {
         Court court = courtRepository.findById(request.getCourtId())
                 .orElseThrow(() -> new ResourceNotFoundException("Court not found"));
 
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Account account = accountRepository.findAccountByEmail(email)
+        Account account = accountRepository.findById(request.getAccountId())
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
 
-        CourtFeedback feedback = modelMapper.map(request, CourtFeedback.class);
+        CourtFeedback feedback = new CourtFeedback();
         feedback.setCourt(court);
         feedback.setAccount(account);
+        feedback.setComment(request.getComment());
+        feedback.setCourtQualityRating(request.getCourtQualityRating());
+        feedback.setCleanlinessRating(request.getCleanlinessRating());
+        feedback.setBookingExperienceRating(request.getBookingExperienceRating());
+        feedback.setPlayedDate(request.getPlayedDate());
+
+        // auto tính overallRating
+        int total = request.getCourtQualityRating()
+                + request.getCleanlinessRating()
+                + request.getBookingExperienceRating();
+        double average = total / 3.0;
+        feedback.setOverallRating((float) average);
 
         return feedbackRepository.save(feedback);
     }
@@ -54,12 +66,28 @@ public class CourtFeedbackService {
                 .toList();
     }
 
+    public List<CourtFeedbackResponse> getAllFeedbacks() {
+        List<CourtFeedback> feedbackList = courtFeedbackRepository.findAll();
+        return feedbackList.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
     public List<CourtFeedbackResponse> getFeedbacksByCurrentAccount() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Account account = accountRepository.findAccountByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
         return feedbackRepository.findByAccount_Id(account.getId())
                 .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+    public List<CourtFeedbackResponse> getRandomFeedbacks(int limit) {
+        List<CourtFeedback> allFeedbacks = courtFeedbackRepository.findAll();
+        Collections.shuffle(allFeedbacks); // Random
+        return allFeedbacks.stream()
+                .limit(limit)
                 .map(this::convertToResponse)
                 .toList();
     }
@@ -73,12 +101,6 @@ public class CourtFeedbackService {
         dto.setCleanlinessRating(feedback.getCleanlinessRating());
         dto.setBookingExperienceRating(feedback.getBookingExperienceRating());
         dto.setPlayedDate(feedback.getPlayedDate());
-        dto.setAnonymous(feedback.isAnonymous());
-
-        if (!feedback.isAnonymous() && feedback.getAccount() != null) {
-            dto.setFullName(feedback.getAccount().getFullName());
-            dto.setAvatar(feedback.getAccount().getImage());
-        }
 
         return dto;
     }
