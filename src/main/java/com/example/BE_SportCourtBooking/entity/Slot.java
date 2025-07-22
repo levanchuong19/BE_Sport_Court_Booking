@@ -35,6 +35,10 @@ public class Slot {
     @JsonIgnore
     Court court;
 
+    @OneToOne(mappedBy = "slot", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Payment payment;
+
     @Column(name = "create_at")
     @Temporal(TemporalType.TIMESTAMP)
     private Date createAt;

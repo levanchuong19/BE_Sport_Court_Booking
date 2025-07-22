@@ -1,4 +1,5 @@
 package com.example.BE_SportCourtBooking.api;
+import com.example.BE_SportCourtBooking.entity.Court;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
 import com.example.BE_SportCourtBooking.model.Request.CourtPricingRequest;
@@ -219,6 +220,22 @@ public class CourtAPI {
             return ResponseEntity.status(403).body(createResponse(403, false, "Get top 3 Courts Bookings error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(createResponse(500, false, "Get top 3 Courts Bookings error: ", e.getMessage()));
+        }
+    }
+
+    @GetMapping("getCourtByOwner/{ownerId}")
+    public ResponseEntity<ApiResponse> getCourtByOwner(@PathVariable UUID ownerId) {
+        try {
+            List<Court> courts = courtService.getCourtByOwner(ownerId);
+            return ResponseEntity.ok(createResponse(200, true, "Get Court by Owner successfully", courts));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Get Court by Owner error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Get Court by Owner error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false,  "Get Court by Owner error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Get Court by Owner error: " , e.getMessage()));
         }
     }
 }

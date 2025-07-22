@@ -302,4 +302,16 @@ public class CourtService {
                 .collect(Collectors.toList());
     }
 
+    public List<Court> getCourtByOwner(UUID id) {
+        Account owner = accountRepository.findAccountById(id);
+        if(owner == null) {
+            throw new EntityNotFoundException("Owner account not found");
+        }
+        List<Court>  courts = courtRepository.findCourtByOwner(id);
+        if(courts.isEmpty()){
+            throw new EntityNotFoundException("No business location found for this owner");
+        }
+        return courts;
+    }
+
 }
