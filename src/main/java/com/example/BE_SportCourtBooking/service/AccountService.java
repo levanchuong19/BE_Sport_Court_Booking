@@ -48,7 +48,7 @@ public class AccountService {
         oldAccount.setGender(updateAccountRequest.getGender());
         oldAccount.setAddress(updateAccountRequest.getAddress());
         oldAccount.setImage(updateAccountRequest.getImage());
-        oldAccount.setPhone(updateAccountRequest.getPhone());
+
         return accountRepository.save(oldAccount);
     }
 

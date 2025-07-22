@@ -13,7 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
@@ -120,28 +119,19 @@ public class StatisticAdminService {
         }
     }
 
-    public Map<String, Object> getTodayAndYesterdayPaidBookingAndRevenue() {
+    public Map<String, Object> getTodayPaidBookingAndRevenue() {
         try {
-
             Map<String, Object> result = new LinkedHashMap<>();
 
+            Long paidCount = slotRepository.countTodayPaidBookings();
+            BigDecimal paidIncome = slotRepository.sumTodayPaidIncome();
 
-            Long todayPaidBookings = slotRepository.countTodayPaidBookings();
-            BigDecimal todayPaidIncome = slotRepository.sumTodayPaidIncome();
-
-
-            Long yesterdayPaidBookings = slotRepository.countYesterdayPaidBookings();
-            BigDecimal yesterdayPaidIncome = slotRepository.sumYesterdayPaidIncome();
-
-
-            result.put("todayTotalPaidBookings", todayPaidBookings);
-            result.put("todayTotalPaidIncome", todayPaidIncome);
-            result.put("yesterdayTotalPaidBookings", yesterdayPaidBookings);
-            result.put("yesterdayTotalPaidIncome", yesterdayPaidIncome);
+            result.put("paidCountToday", paidCount);
+            result.put("paidIncomeToday", paidIncome);
 
             return result;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to get today's and yesterday's paid booking stats: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to get today's paid booking stats", e);
         }
     }
 
@@ -179,25 +169,22 @@ public class StatisticAdminService {
         }
     }
 
-    public Map<String, BigDecimal> getRevenueThisMonthGroupByCourtType() {
-        try {
-            List<Object[]> records = slotRepository.revenueThisMonthGroupByCourtType();
-
-            Map<String, BigDecimal> result = new LinkedHashMap<>();
-
-            for (Object[] record : records) {
-                String courtType = (String) record[0];
-
-                BigDecimal revenue = new BigDecimal(record[1].toString());
-
-                result.put(courtType, revenue);
-            }
-
-            return result;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get revenue grouped by court type for this month: " + e.getMessage(), e);
-        }
-    }
+//    public Map<String, BigDecimal> getRevenueThisMonthGroupByCourtType() {
+//        try {
+//            Map<String, BigDecimal> result = new LinkedHashMap<>();
+//            List<Object[]> records = slotRepository.revenueThisMonthGroupByCourtType();
+//
+//            for (Object[] record : records) {
+//                String courtType = (String) record[0];
+//                BigDecimal revenue = (record[1] != null) ? (BigDecimal) record[1] : BigDecimal.ZERO;
+//                result.put(courtType, revenue);
+//            }
+//
+//            return result;
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to get revenue grouped by court type for this month", e);
+//        }
+//    }
 
     public Map<String, Long> getCustomerAccountTodayYesterday() {
         try {
@@ -240,41 +227,22 @@ public class StatisticAdminService {
         }
     }
 
-    public Page<Map<String, Object>> getManagerStatistics(Pageable pageable) {
-        try {
-            // Gọi đến phương thức repository đã được sửa lỗi
-            Page<Object[]> rawPage = accountRepository.getManagerStatistics(pageable);
-
-            // Dùng .map() của Page để chuyển đổi dữ liệu mà không làm mất thông tin phân trang
-            return rawPage.map(record -> {
-                Map<String, Object> item = new LinkedHashMap<>();
-
-                // Xử lý dữ liệu trả về từ native query một cách an toàn
-                // Native query với binary(16) có thể trả về byte[], cần xử lý
-                Object idObject = record[0];
-                UUID managerId = null;
-                if (idObject instanceof byte[]) {
-                    byte[] bytes = (byte[]) idObject;
-                    ByteBuffer bb = ByteBuffer.wrap(bytes);
-                    long high = bb.getLong();
-                    long low = bb.getLong();
-                    managerId = new UUID(high, low);
-                } else if (idObject != null) {
-                    managerId = UUID.fromString(idObject.toString());
-                }
-
-                item.put("managerId", managerId);
-                item.put("fullName", record[1]);
-                item.put("phone", record[2]);
-                item.put("totalBookings", ((Number) record[3]).longValue());
-                item.put("totalRevenue", new BigDecimal(record[4].toString()));
-
-                return item;
-            });
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get manager statistics: " + e.getMessage(), e);
-        }
-    }
+//    public Page<Map<String, Object>> getPaidBookingsAndRevenueWithManagerInfo(Pageable pageable) {
+//        try {
+//            return accountRepository.countTotalPaidBookingsAndRevenueWithManagerBasicInfo(pageable)
+//                    .map(row -> {
+//                        Map<String, Object> item = new LinkedHashMap<>();
+//                        item.put("managerId", (UUID) row[0]);
+//                        item.put("fullName", (String) row[1]);
+//                        item.put("phone", (String) row[2]);
+//                        item.put("totalBookings", ((Number) row[3]).longValue());
+//                        item.put("totalRevenue", (BigDecimal) row[4]);
+//                        return item;
+//                    });
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to get paid bookings and revenue with manager info", e);
+//        }
+//    }
 
 
 //    public Page<Map<String, Object>> getAllCourtsWithManagerAndPaidStats(Pageable pageable) {
@@ -312,31 +280,6 @@ public class StatisticAdminService {
             return result;
         } catch (Exception e) {
             throw new RuntimeException("Failed to get top 5 courts by paid bookings", e);
-        }
-    }
-
-
-    public List<Map<String, Object>> getCourtStatistics() {
-        try {
-            List<Object[]> rawData = courtRepository.getCourtStatistics();
-
-            List<Map<String, Object>> statisticsList = new ArrayList<>();
-
-            for (Object[] record : rawData) {
-                Map<String, Object> courtStat = new LinkedHashMap<>();
-
-                courtStat.put("courtName", record[0]);
-                courtStat.put("managerName", record[1]);
-                courtStat.put("totalBookings", ((Number) record[2]).longValue());
-                courtStat.put("totalRevenue", new BigDecimal(record[3].toString()));
-
-                statisticsList.add(courtStat);
-            }
-
-            return statisticsList;
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get court statistics: " + e.getMessage(), e);
         }
     }
 
