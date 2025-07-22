@@ -151,4 +151,15 @@ public class BusinessLocationAPI {
             return ResponseEntity.status(500).body(createResponse(500, false, "Activate Business Location error", e.getMessage()));
         }
     }
+
+    @GetMapping("getByOwner/{ownerId}")
+    public ResponseEntity<ApiResponse> getBusinessLocationsByOwner(@PathVariable UUID ownerId) {
+        try {
+            return ResponseEntity.ok(createResponse(200, true, "Get Business Locations by Owner successfully",  businessLocationService.getBusinessLocationByOwner(ownerId)));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Business Locations not found for this owner", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Get Business Locations by Owner error", e.getMessage()));
+        }
+    }
 }
