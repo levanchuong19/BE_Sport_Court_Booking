@@ -37,4 +37,7 @@ Page<BusinessLocation> findByFilters(@Param("name") String name,
             "GROUP BY bl " +
             "ORDER BY bookingCount DESC")
     List<Object[]> findTop3BusinessLocationsByBookingCount(Pageable pageable);
+
+    @Query("SELECT b FROM BusinessLocation b WHERE b.owner.id = :ownerId")
+    List<BusinessLocation> findBusinessLocationByOwner(@Param("ownerId") UUID ownerId);
 }

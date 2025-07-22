@@ -28,6 +28,7 @@ import java.sql.Time;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -238,5 +239,17 @@ public class BusinessLocationService {
         businessLocation.setStatus(LocationStatus.ACTIVE);
         businessLocationRepo.save(businessLocation);
         return modelMapper.map(businessLocation, BusinessLocationResponse.class);
+    }
+
+    public List<BusinessLocation> getBusinessLocationByOwner(UUID id) {
+        Account owner = accountRepository.findAccountById(id);
+        if(owner == null) {
+            throw new EntityNotFoundException("Owner account not found");
+        }
+         List<BusinessLocation>  locations = businessLocationRepo.findBusinessLocationByOwner(id);
+                if(locations.isEmpty()){
+                    throw new EntityNotFoundException("No business location found for this owner");
+                }
+                return locations;
     }
 }
