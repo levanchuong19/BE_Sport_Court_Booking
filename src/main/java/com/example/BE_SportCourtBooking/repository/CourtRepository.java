@@ -1,4 +1,5 @@
 package com.example.BE_SportCourtBooking.repository;
+import com.example.BE_SportCourtBooking.entity.BusinessLocation;
 import com.example.BE_SportCourtBooking.entity.Court;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
@@ -55,4 +56,7 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
             "GROUP BY c " +
             "ORDER BY bookingCount DESC")
     List<Object[]> findTop3CourtsByBookingCount();
+
+    @Query("SELECT b FROM Court b WHERE b.courtManager.id = :ownerId")
+    List<Court> findCourtByOwner(@Param("ownerId") UUID ownerId);
 }

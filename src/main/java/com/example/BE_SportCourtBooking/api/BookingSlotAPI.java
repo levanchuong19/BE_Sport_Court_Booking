@@ -5,6 +5,7 @@ import com.example.BE_SportCourtBooking.entity.Enum.SlotStatus;
 import com.example.BE_SportCourtBooking.entity.Slot;
 import com.example.BE_SportCourtBooking.model.Request.SlotRequest;
 import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
+import com.example.BE_SportCourtBooking.model.Response.SlotDTO;
 import com.example.BE_SportCourtBooking.service.SlotService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.persistence.EntityNotFoundException;
@@ -51,7 +52,7 @@ public class BookingSlotAPI {
                                                    @RequestParam(defaultValue = "0") int page,
                                                    @RequestParam(defaultValue = "10") int size)  {
         try {
-            Page<Slot> slot = slotService.getAllSlot(slotType,slotStatus,isDelete, page, size);
+            Page<SlotDTO> slot = slotService.getAllSlot(slotType,slotStatus,isDelete, page, size);
             return ResponseEntity.ok(createResponse(200, true, "Get all slot successfully", slot));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(createResponse(500, false, "Get all slot error: " ,e.getMessage()));

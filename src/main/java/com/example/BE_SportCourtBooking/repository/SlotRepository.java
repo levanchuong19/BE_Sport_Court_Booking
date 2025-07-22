@@ -53,10 +53,23 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
     @Query("SELECT s FROM Slot s WHERE s.bookingStatus = 'PENDING' AND s.createAt <= :timeLimit")
     List<Slot> findOverdueSlots(@Param("timeLimit") Timestamp timeLimit);
 
-    @Query("SELECT c FROM Slot c WHERE " +
-            "(:status IS NULL OR c.status = :status) AND " +
-            "(:isDelete IS NULL OR c.isDelete = :isDelete) AND " +
-            "(:slotType IS NULL OR c.slotType = :slotType)")
+//    @Query("SELECT c FROM Slot c WHERE " +
+//            "(:status IS NULL OR c.status = :status) AND " +
+//            "(:isDelete IS NULL OR c.isDelete = :isDelete) AND " +
+//            "(:slotType IS NULL OR c.slotType = :slotType)")
+//    Page<Slot> findByFilters(
+//            @Param("slotType") PriceType slotType,
+//            @Param("status") SlotStatus status,
+//            @Param("isDelete") Boolean isDelete,
+//            Pageable pageable);
+
+    @Query("SELECT s FROM Slot s " +
+            "LEFT JOIN FETCH s.account a " +
+            "LEFT JOIN FETCH s.court c " +
+            "LEFT JOIN FETCH s.payment p " +
+            "WHERE (:status IS NULL OR s.status = :status) AND " +
+            "(:isDelete IS NULL OR s.isDelete = :isDelete) AND " +
+            "(:slotType IS NULL OR s.slotType = :slotType)")
     Page<Slot> findByFilters(
             @Param("slotType") PriceType slotType,
             @Param("status") SlotStatus status,

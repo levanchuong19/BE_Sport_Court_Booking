@@ -3,10 +3,7 @@ package com.example.BE_SportCourtBooking.service;
 import com.example.BE_SportCourtBooking.entity.*;
 import com.example.BE_SportCourtBooking.entity.Enum.*;
 import com.example.BE_SportCourtBooking.model.Request.SlotRequest;
-import com.example.BE_SportCourtBooking.model.Response.BookingHistoryResponse;
-import com.example.BE_SportCourtBooking.model.Response.BookingResponse;
-import com.example.BE_SportCourtBooking.model.Response.CourtResponse;
-import com.example.BE_SportCourtBooking.model.Response.SlotResponse;
+import com.example.BE_SportCourtBooking.model.Response.*;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
 import com.example.BE_SportCourtBooking.repository.CourtRepository;
 import com.example.BE_SportCourtBooking.repository.PaymentRepository;
@@ -174,9 +171,29 @@ public class SlotService {
         }
     }
 
-    public Page<Slot> getAllSlot(PriceType slotType, SlotStatus slotStatus,Boolean isDelete, int page, int size) {
+//    public Page<Slot> getAllSlot(PriceType slotType, SlotStatus slotStatus,Boolean isDelete, int page, int size) {
+//        Pageable pageable = PageRequest.of(page, size);
+//        return slotRepository.findByFilters(slotType, slotStatus, isDelete, pageable);
+//    }
+
+    public Page<SlotDTO> getAllSlot(PriceType slotType, SlotStatus slotStatus, Boolean isDelete, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return slotRepository.findByFilters(slotType, slotStatus, isDelete, pageable);
+        Page<Slot> slotPage = slotRepository.findByFilters(slotType, slotStatus, isDelete, pageable);
+
+        return slotPage.map(slot -> {
+            SlotDTO dto = new SlotDTO();
+            dto.setId(slot.getId());
+            dto.setAccountUsername(slot.getAccount() != null ? slot.getAccount().getFullName() : null);
+            dto.setCourtName(slot.getCourt() != null ? slot.getCourt().getCourtName() : null);
+            dto.setSlotType(slot.getSlotType());
+            dto.setStatus(slot.getStatus());
+            dto.setStartDate(slot.getStartDate());
+            dto.setEndDate(slot.getEndDate());
+            dto.setStartTime(slot.getStartTime());
+            dto.setEndTime(slot.getEndTime());
+            dto.setPrice(slot.getPayment() != null ? slot.getPayment().getAmount() : null);
+            return dto;
+        });
     }
 
     public SlotResponse getSlot(UUID slotID) {
