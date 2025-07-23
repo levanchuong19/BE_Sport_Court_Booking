@@ -78,9 +78,16 @@ public class SlotService {
         if(slotRequest.getSlotType() == PriceType.HOURLY && slotRequest.getStartDate().isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("\n"+ "Đặt sân theo giờ phải ở trong tương lai!");
         }
+
+        System.out.println("Checking overlap: courtId=" + court.getId() +
+                ", slotType=" + slotRequest.getSlotType() +
+                ", startDate=" + slotRequest.getStartDate() +
+                ", endDate=" + slotRequest.getEndDate() +
+                ", startTime=" + slotRequest.getStartTime() +
+                ", endTime=" + slotRequest.getEndTime());
         long  isConflict = slotRepository.countOverlappingSlots(
                 court.getId(),slotRequest.getSlotType(),slotRequest.getStartDate(), slotRequest.getEndDate(),
-                slotRequest.getStartTime(), slotRequest.getEndTime()
+                slotRequest.getStartTime()+ ":00", slotRequest.getEndTime()+ ":00"
 
         );
         if(isConflict > 0) {
@@ -111,61 +118,6 @@ public class SlotService {
             slot.setEndTime(String.valueOf(Time.valueOf(closeLocalTime)));
 
             return modelMapper.map(slotRepository.save(slot), SlotResponse.class);
-
-//            BigDecimal  price = court.getPrices().stream()
-//                    .filter(p -> p.getPriceType() == slotRequest.getSlotType())
-//                    .findFirst()
-//                    .orElseThrow(() -> new IllegalArgumentException("Court does not have a price for the selected slot type"))
-//                    .getPrice();
-//
-//            long durationUnits = 0;
-//            LocalDate startDate = slotRequest.getStartDate();
-//            LocalDate endDate = slotRequest.getEndDate();
-
-//            switch (slotRequest.getSlotType()) {
-//                case HOURLY:
-//                    long totalDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
-//                    long hoursPerDay = ChronoUnit.HOURS.between(openLocalTime, closeLocalTime);
-//                    durationUnits = totalDays * hoursPerDay;
-//                    break;
-//
-//                case DAILY:
-//                    durationUnits = ChronoUnit.DAYS.between(startDate, endDate) + 1;
-//                    break;
-//
-//                case WEEKLY:
-//                    durationUnits = ChronoUnit.WEEKS.between(startDate, endDate) + 1;
-//                    break;
-//
-//                case MONTHLY:
-//                    durationUnits = ChronoUnit.MONTHS.between(
-//                            startDate.withDayOfMonth(1),
-//                            endDate.withDayOfMonth(1)
-//                    ) + 1;
-//                    break;
-//
-//                default:
-//                    throw new IllegalArgumentException("Unsupported slot type: " + slotRequest.getSlotType());
-//            }
-//
-//            BigDecimal  totalPrice = price.multiply(BigDecimal.valueOf(durationUnits));
-//            slot.setPrice(totalPrice);
-//
-//            Slot createdSlot = slotRepository.save(slot);
-//            Payment payment = new Payment();
-//            payment.setSlot(slot);
-//            payment.setAmount(totalPrice);
-//            payment.setType(PaymentType.BANKING);
-//            payment.setStatus(PaymentStatus.PENDING);
-//            payment.setVnpayTransactionId(UUID.randomUUID().toString());
-//            payment.setCreateAt(new Date());
-//            paymentRepository.save(payment);
-//
-//            try {
-//                return createUrl(createdSlot);
-//            } catch (Exception e) {
-//                throw new RuntimeException(e);
-//            }
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Invalid time format for openTime or closeTime. Use HH:mm or HH:mm:ss.");
         }
@@ -184,7 +136,9 @@ public class SlotService {
             SlotDTO dto = new SlotDTO();
             dto.setId(slot.getId());
             dto.setAccountUsername(slot.getAccount() != null ? slot.getAccount().getFullName() : null);
+            dto.setAccountId(slot.getAccount() != null ? slot.getAccount().getId() : null);
             dto.setCourtName(slot.getCourt() != null ? slot.getCourt().getCourtName() : null);
+            dto.setOwnerId(slot.getCourt() != null ? slot.getCourt().getCourtManager().getId() : null);
             dto.setSlotType(slot.getSlotType());
             dto.setStatus(slot.getStatus());
             dto.setStartDate(slot.getStartDate());
@@ -266,6 +220,7 @@ public class SlotService {
 
         for (Slot slot : overdueSlots) {
             slot.setBookingStatus(BookingStatus.OVERDUE);
+            slot.setStatus(SlotStatus.CANCELED);
         }
         slotRepository.saveAll(overdueSlots);
     }

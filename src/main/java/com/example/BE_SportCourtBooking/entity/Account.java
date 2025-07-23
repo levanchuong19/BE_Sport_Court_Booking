@@ -63,6 +63,8 @@ public class Account implements UserDetails {
     @Column(name = "image")
     String image;
 
+    UUID managerId;
+
     @Enumerated(EnumType.STRING)
     Role role;
 
