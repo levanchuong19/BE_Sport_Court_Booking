@@ -57,7 +57,7 @@ public class CourtAPI {
                                                     @RequestParam(required = false) String courtName,
                                                     @RequestParam(required = false) Boolean isDelete,
                                                     @RequestParam(defaultValue = "0") int page,
-                                                    @RequestParam(defaultValue = "10") int size)  {
+                                                    @RequestParam(defaultValue = "30") int size)  {
         try {
             Page<CourtResponse> courts = courtService.getAllCourts(courtType, status, courtName, isDelete, page, size);
 

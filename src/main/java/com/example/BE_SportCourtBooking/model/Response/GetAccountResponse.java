@@ -4,6 +4,7 @@ import com.example.BE_SportCourtBooking.entity.Enum.Role;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Data
 public class GetAccountResponse {
@@ -15,4 +16,5 @@ public class GetAccountResponse {
     String address;
     Role role;
     String image;
+    UUID manageId;
 }
