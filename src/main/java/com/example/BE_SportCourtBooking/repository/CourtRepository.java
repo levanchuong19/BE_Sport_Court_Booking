@@ -59,4 +59,26 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
 
     @Query("SELECT b FROM Court b WHERE b.courtManager.id = :ownerId")
     List<Court> findCourtByOwner(@Param("ownerId") UUID ownerId);
+
+    @Query(value = "SELECT " +
+            "    c.court_name AS courtName, " +
+            "    a.full_name AS managerName, " +
+            "    COUNT(s.id) AS totalBookings, " +
+            "    COALESCE(SUM(CASE WHEN p.status = 'COMPLETED' THEN p.amount ELSE 0 END), 0) AS totalRevenue " +
+            "FROM " +
+            "    courts c " +
+            "LEFT JOIN " +
+            "    accounts a ON c.manager_id = a.id " +
+            "LEFT JOIN " +
+            "    slots s ON c.id = s.court_id " +
+            "LEFT JOIN " +
+            "    payments p ON s.id = p.slot_id " +
+            "WHERE " +
+            "    c.is_deleted = false " +
+            "GROUP BY " +
+            "    c.id, c.court_name, a.full_name " +
+            "ORDER BY " +
+            "    totalRevenue DESC",
+            nativeQuery = true)
+    List<Object[]> getCourtStatistics();
 }
