@@ -79,18 +79,19 @@ public class StatisticAdminAPI {
         return ResponseEntity.ok(counts);
     }
 
-//    @GetMapping("/revenue-this-month-eachCourt")
-//    public ResponseEntity<Map<String, BigDecimal>> getRevenueThisMonthCourtType() {
-//        Map<String, BigDecimal> sum = statisticAdminService.getRevenueThisMonthGroupByCourtType();
-//
-//        return ResponseEntity.ok(sum);
-//    }
+    @GetMapping("/revenue-this-month-eachCourt")
+    public ResponseEntity<Map<String, BigDecimal>> getRevenueThisMonthCourtType() {
+        Map<String, BigDecimal> sum = statisticAdminService.getRevenueThisMonthGroupByCourtType();
 
-    @GetMapping("/booking-revenue-today")
-    public ResponseEntity<Map<String, Object>> getBookingsAndRevenueToday() {
-        Map<String, Object> list = statisticAdminService.getTodayPaidBookingAndRevenue();
+        return ResponseEntity.ok(sum);
+    }
 
-        return ResponseEntity.ok(list);
+    @GetMapping("/booking-revenue-today-yesterday") // Đổi tên API cho rõ nghĩa
+    public ResponseEntity<Map<String, Object>> getBookingsAndRevenueTodayAndYesterday() {
+
+        Map<String, Object> stats = statisticAdminService.getTodayAndYesterdayPaidBookingAndRevenue();
+
+        return ResponseEntity.ok(stats);
     }
 
     @GetMapping("/customer-yesterday-today")
@@ -107,17 +108,17 @@ public class StatisticAdminAPI {
         return ResponseEntity.ok(list);
     }
 
-//    @GetMapping("/all-manager-summary")
-//    public ResponseEntity<Page<Map<String, Object>>> getAllManagersSummary(
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "10") int size) {
-//
-//        Pageable pageable = PageRequest.of(page, size);
-//
-//        Page<Map<String, Object>> result = statisticAdminService.getPaidBookingsAndRevenueWithManagerInfo(pageable);
-//
-//        return ResponseEntity.ok(result);
-//    }
+    @GetMapping("/managers-statistic")
+    public ResponseEntity<Page<Map<String, Object>>> getAllManagersSummary(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Map<String, Object>> result = statisticAdminService.getManagerStatistics(pageable);
+
+        return ResponseEntity.ok(result);
+    }
 //
 //    @GetMapping("/all-court-summary")
 //    public ResponseEntity<Page<Map<String, Object>>> getAllCourtsSummary(
@@ -136,5 +137,11 @@ public class StatisticAdminAPI {
         List<Map<String, Object>> list = statisticAdminService.getTop5CourtsByPaidBookings();
 
         return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/courts-statistic")
+    public ResponseEntity<List<Map<String, Object>>> getDetailedCourtStatistics() {
+        List<Map<String, Object>> statistics = statisticAdminService.getCourtStatistics();
+        return ResponseEntity.ok(statistics);
     }
 }
