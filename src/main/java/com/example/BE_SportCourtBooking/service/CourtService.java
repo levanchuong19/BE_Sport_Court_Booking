@@ -75,7 +75,7 @@ public class CourtService {
             court.setMaxPlayers(courtRequest.getMaxPlayers());
             court.setDescription(courtRequest.getDescription());
             court.setCourtManager(account);
-            court.setStatus(CourtStatus.INACTIVE);
+            court.setStatus(CourtStatus.AVAILABLE);
 
             List<CourtPricing> prices = courtRequest.getPrices().stream()
                     .map(priceRequest -> {

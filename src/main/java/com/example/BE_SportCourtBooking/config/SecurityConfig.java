@@ -59,7 +59,6 @@ public class SecurityConfig {
                                         "/api/auth/change-password",
                                         "/api/auth/google/login",
                                         "/websocket/**",
-                                        "/api/account",
                                         "/api/support/create",
                                         "/api/notifications/**",
                                         "/api/feedback/court/**",

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
 @RestController
 @RequestMapping("/api/account")
 @CrossOrigin("*")
@@ -30,8 +30,9 @@ public class AccountAPI {
     }
 
     @PostMapping
-    public ResponseEntity<Account> create(@Valid @RequestBody NewAccountRequest newAccountRequest) {
-        Account newBreed = accountService.createAccount(newAccountRequest);
+    public ResponseEntity<Account> create(@Valid @RequestBody NewAccountRequest newAccountRequest,
+                                          @RequestParam(required = false) UUID managerId) {
+        Account newBreed = accountService.createAccount(newAccountRequest, managerId);
         return ResponseEntity.ok(newBreed);
     }
 

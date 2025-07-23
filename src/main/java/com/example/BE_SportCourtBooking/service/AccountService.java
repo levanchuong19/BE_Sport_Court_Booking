@@ -1,6 +1,7 @@
 package com.example.BE_SportCourtBooking.service;
 
 import com.example.BE_SportCourtBooking.entity.Account;
+import com.example.BE_SportCourtBooking.entity.Enum.Role;
 import com.example.BE_SportCourtBooking.exception.AccountNotFoundException;
 import com.example.BE_SportCourtBooking.exception.DuplicateEntity;
 import com.example.BE_SportCourtBooking.model.Request.NewAccountRequest;
@@ -24,18 +25,30 @@ public class AccountService {
     AccountRepository accountRepository;
 
     @Autowired
+    AuthenticationService authenticationService;
+
+    @Autowired
     @Lazy
     PasswordEncoder passwordEncoder;
 
     ModelMapper modelMapper = new ModelMapper();
 
-    public Account createAccount(NewAccountRequest newAccountRequest) {
+    public Account createAccount(NewAccountRequest newAccountRequest, UUID managerId) {
         Account account = modelMapper.map(newAccountRequest, Account.class);
 
         try {
+//            UUID managerId = authenticationService.getCurrentAccount().getManagerId();
             account.setPassword(passwordEncoder.encode(newAccountRequest.getPassword()));
+            Account  acc = accountRepository.findAccountById(managerId);
+            if(acc.getRole() != Role.MANAGER) {
+                throw new IllegalArgumentException("Manager ID must be a manager or admin account.");
+            }else {
+                account.setManagerId(managerId);
+                account.setRole(Role.STAFF);
+            }
             return accountRepository.save(account);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new DuplicateEntity("Duplicate account id!");
         }
     }
