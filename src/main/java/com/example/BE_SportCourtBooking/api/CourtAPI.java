@@ -34,6 +34,7 @@ public class CourtAPI {
         return new ApiResponse(code, status, message, data);
     }
 
+
     @PostMapping("create")
     public ResponseEntity<ApiResponse> createCourt(
             @Valid @RequestBody CourtRequest courtRequest) {

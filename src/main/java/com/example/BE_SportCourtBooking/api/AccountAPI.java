@@ -51,6 +51,7 @@ public class AccountAPI {
     }
 
     @GetMapping("accountDetail/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     public ResponseEntity<ApiResponse> getAccountDetail(@PathVariable UUID id) {
         try {
             Account account = accountService.getAccount(id);

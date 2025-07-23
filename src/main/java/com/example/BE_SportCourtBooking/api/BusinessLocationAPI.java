@@ -162,4 +162,15 @@ public class BusinessLocationAPI {
             return ResponseEntity.status(500).body(createResponse(500, false, "Get Business Locations by Owner error", e.getMessage()));
         }
     }
+
+    @GetMapping("/inactive")
+    public ResponseEntity<ApiResponse> getInactiveLocations() {
+        try {
+            List<BusinessLocation> inactive = businessLocationService.getUnactiveBusinessLocation();
+            return ResponseEntity.ok(createResponse(200, true, "Get inactive Business Locations successfully", inactive));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Get inactive Business Locations error", e.getMessage()));
+        }
+    }
+
 }

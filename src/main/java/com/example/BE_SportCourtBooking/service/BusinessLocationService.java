@@ -2,7 +2,6 @@ package com.example.BE_SportCourtBooking.service;
 
 import com.example.BE_SportCourtBooking.entity.Account;
 import com.example.BE_SportCourtBooking.entity.BusinessLocation;
-import com.example.BE_SportCourtBooking.entity.Court;
 import com.example.BE_SportCourtBooking.entity.Enum.LocationStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.Role;
 import com.example.BE_SportCourtBooking.model.Request.BusinessLocationRequest;
@@ -13,7 +12,6 @@ import com.example.BE_SportCourtBooking.repository.AccountRepository;
 import com.example.BE_SportCourtBooking.repository.BusinessLocationRepo;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.NotNull;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +26,6 @@ import java.sql.Time;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -252,4 +249,9 @@ public class BusinessLocationService {
                 }
                 return locations;
     }
+
+    public List<BusinessLocation> getUnactiveBusinessLocation() {
+        return businessLocationRepo.findByStatus(LocationStatus.INACTIVE);
+    }
 }
+    

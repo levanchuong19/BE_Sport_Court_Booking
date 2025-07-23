@@ -5,6 +5,7 @@ import com.example.BE_SportCourtBooking.entity.Court;
 import com.example.BE_SportCourtBooking.entity.CourtFeedback;
 import com.example.BE_SportCourtBooking.exception.ResourceNotFoundException;
 import com.example.BE_SportCourtBooking.model.Request.FeedbackRequest;
+import com.example.BE_SportCourtBooking.model.Response.AccountResponse;
 import com.example.BE_SportCourtBooking.model.Response.CourtFeedbackResponse;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
 import com.example.BE_SportCourtBooking.repository.CourtFeedbackRepository;
@@ -102,8 +103,16 @@ public class CourtFeedbackService {
         dto.setBookingExperienceRating(feedback.getBookingExperienceRating());
         dto.setPlayedDate(feedback.getPlayedDate());
 
+        Account account = feedback.getAccount();
+        if (account != null) {
+            AccountResponse accountResponse = new AccountResponse();
+            accountResponse.setFullName(account.getFullName());
+            accountResponse.setEmail(account.getEmail());
+            dto.setAccount(accountResponse);
+        }
         return dto;
     }
+
 
     public void deleteFeedbackById(UUID feedbackId) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
