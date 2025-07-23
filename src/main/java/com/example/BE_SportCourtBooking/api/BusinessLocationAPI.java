@@ -163,9 +163,14 @@ public class BusinessLocationAPI {
         }
     }
 
-    @GetMapping("/business-locations/inactive")
-    public ResponseEntity<List<BusinessLocation>> getInactiveLocations() {
-        List<BusinessLocation> inactive = businessLocationService.getUnactiveBusinessLocation();
-        return ResponseEntity.ok(inactive);
+    @GetMapping("/inactive")
+    public ResponseEntity<ApiResponse> getInactiveLocations() {
+        try {
+            List<BusinessLocation> inactive = businessLocationService.getUnactiveBusinessLocation();
+            return ResponseEntity.ok(createResponse(200, true, "Get inactive Business Locations successfully", inactive));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Get inactive Business Locations error", e.getMessage()));
+        }
     }
+
 }
