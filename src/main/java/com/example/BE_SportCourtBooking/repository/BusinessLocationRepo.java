@@ -1,7 +1,7 @@
 package com.example.BE_SportCourtBooking.repository;
 
 import com.example.BE_SportCourtBooking.entity.BusinessLocation;
-import com.example.BE_SportCourtBooking.entity.Court;
+import com.example.BE_SportCourtBooking.entity.Enum.LocationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,4 +40,6 @@ Page<BusinessLocation> findByFilters(@Param("name") String name,
 
     @Query("SELECT b FROM BusinessLocation b WHERE b.owner.id = :ownerId")
     List<BusinessLocation> findBusinessLocationByOwner(@Param("ownerId") UUID ownerId);
+    List<BusinessLocation> findByStatus(LocationStatus status);
+
 }
