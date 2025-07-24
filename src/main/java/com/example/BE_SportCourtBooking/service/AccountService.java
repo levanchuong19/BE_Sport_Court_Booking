@@ -6,8 +6,10 @@ import com.example.BE_SportCourtBooking.exception.AccountNotFoundException;
 import com.example.BE_SportCourtBooking.exception.DuplicateEntity;
 import com.example.BE_SportCourtBooking.model.Request.NewAccountRequest;
 import com.example.BE_SportCourtBooking.model.Request.UpdateAccountRequest;
+import com.example.BE_SportCourtBooking.model.Request.UpdateAccountStatusRequest;
 import com.example.BE_SportCourtBooking.model.Response.GetAccountResponse;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -36,7 +38,6 @@ public class AccountService {
         Account account = modelMapper.map(newAccountRequest, Account.class);
 
         try {
-//            UUID managerId = authenticationService.getCurrentAccount().getManagerId();
             account.setPassword(passwordEncoder.encode(newAccountRequest.getPassword()));
             if (newAccountRequest.getRole() == Role.STAFF) {
                 if (managerId == null) {
@@ -67,7 +68,8 @@ public class AccountService {
         oldAccount.setGender(updateAccountRequest.getGender());
         oldAccount.setAddress(updateAccountRequest.getAddress());
         oldAccount.setImage(updateAccountRequest.getImage());
-
+        oldAccount.setPhone(updateAccountRequest.getPhoneNumber());
+        System.out.println(updateAccountRequest);
         return accountRepository.save(oldAccount);
     }
 
@@ -107,7 +109,6 @@ public class AccountService {
                 .orElseThrow(() -> new AccountNotFoundException("Account không tồn tại"));
     }
 
-
     public Account getAccount(UUID id) {
         Account account = accountRepository.findAccountById(id);
         if (account == null) throw new AccountNotFoundException("Account không tồn tại");
@@ -127,5 +128,13 @@ public class AccountService {
                     return managerObject;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void updateAccountStatus(UUID id, UpdateAccountStatusRequest request) {
+        Account account = accountRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
+        account.setIsDelete(request.isDeleted());
+        accountRepository.save(account);
     }
 }

@@ -138,7 +138,14 @@ public class CourtService {
         if (court.getStatus() == CourtStatus.IN_USE ) {
             throw new IllegalStateException("Cannot delete court that is currently in use");
         }
+        // Xóa toàn bộ hình ảnh liên quan đến sân
+        List<Image> images = court.getImages();
+        if (images != null && !images.isEmpty()) {
+            imageRepository.deleteAll(images);
+            court.getImages().clear();
+        }
         court.setIsDelete(true);
+        court.setStatus(CourtStatus.INACTIVE);
         courtRepository.save(court);
     }
 

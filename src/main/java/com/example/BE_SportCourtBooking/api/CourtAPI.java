@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -108,7 +109,6 @@ public class CourtAPI {
         }
     }
 
-
     @DeleteMapping("delete/{courtId}")
     public ResponseEntity<ApiResponse> deleteCourt(@PathVariable UUID courtId){
         try{
@@ -141,6 +141,7 @@ public class CourtAPI {
             return ResponseEntity.status(500).body(createResponse(500, false, "Update Court error",  e.getMessage()));
         }
     }
+
 
     @DeleteMapping("deleteImage/{courtId}/{imageId}")
     public ResponseEntity<ApiResponse> deleteImage(

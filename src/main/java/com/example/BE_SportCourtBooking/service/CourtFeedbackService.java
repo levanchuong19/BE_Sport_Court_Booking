@@ -102,12 +102,14 @@ public class CourtFeedbackService {
         dto.setCleanlinessRating(feedback.getCleanlinessRating());
         dto.setBookingExperienceRating(feedback.getBookingExperienceRating());
         dto.setPlayedDate(feedback.getPlayedDate());
-
         Account account = feedback.getAccount();
         if (account != null) {
             AccountResponse accountResponse = new AccountResponse();
             accountResponse.setFullName(account.getFullName());
             accountResponse.setEmail(account.getEmail());
+            accountResponse.setImage(account.getImage());
+            accountResponse.setPhone(account.getPhone());
+            accountResponse.setRole(account.getRole());
             dto.setAccount(accountResponse);
         }
         return dto;

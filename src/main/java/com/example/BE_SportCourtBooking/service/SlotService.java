@@ -135,7 +135,9 @@ public class SlotService {
             dto.setStartDate(slot.getStartDate());
             dto.setEndDate(slot.getEndDate());
             dto.setStartTime(slot.getStartTime());
+            dto.setBookingStatus(slot.getBookingStatus() != null ? slot.getBookingStatus().name() : null);
             dto.setEndTime(slot.getEndTime());
+            dto.setPhone(slot.getAccount() != null ? slot.getAccount().getPhone() : null);
             dto.setPrice(slot.getPayment() != null ? slot.getPayment().getAmount() : null);
             return dto;
         });

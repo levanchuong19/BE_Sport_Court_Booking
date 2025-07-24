@@ -14,5 +14,6 @@ public class UpdateAccountRequest {
     Date dateOfBirth;
     String gender;
     String address;
+    String phoneNumber;
     String image;
 }
