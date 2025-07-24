@@ -47,7 +47,10 @@ public class BusinessLocationService {
         if (account == null) {
             throw new IllegalArgumentException("Owner account not found");
         }
-        if (account.getRole() != Role.MANAGER && account.getRole() != Role.ADMIN && account.getRole() != Role.CUSTOMER) {
+        if (account.getRole() == Role.CUSTOMER) {
+            account.setRole(Role.MANAGER); // Promote to manager
+            accountRepository.save(account); // Save updated role
+        } else if (account.getRole() != Role.MANAGER && account.getRole() != Role.ADMIN) {
             throw new IllegalArgumentException("Only managers or admins can create a business location");
         }
         BusinessLocation businessLocation = new BusinessLocation();
