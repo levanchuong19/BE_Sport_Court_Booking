@@ -136,6 +136,7 @@ public class SlotService {
             dto.setEndDate(slot.getEndDate());
             dto.setStartTime(slot.getStartTime());
             dto.setEndTime(slot.getEndTime());
+            dto.setPhone(slot.getAccount() != null ? slot.getAccount().getPhone() : null);
             dto.setPrice(slot.getPayment() != null ? slot.getPayment().getAmount() : null);
             return dto;
         });

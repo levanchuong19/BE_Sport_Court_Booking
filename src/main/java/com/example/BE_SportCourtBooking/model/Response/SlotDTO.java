@@ -14,6 +14,7 @@ import java.util.UUID;
         private String accountUsername; // Username từ Account
         private UUID accountId; // ID từ Account
         private UUID ownerId; // ID từ Court
+        private String phone;
         private String courtName; // Tên sân từ Court
         private PriceType slotType;
         private SlotStatus status;
