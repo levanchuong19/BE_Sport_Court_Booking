@@ -124,5 +124,5 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
             nativeQuery = true)
     Page<Object[]> findAllCourtsWithManagerNameAndPaidBookingStats(Pageable pageable);
 
-
+    List<Account> findAllByRole(Role role);
 }

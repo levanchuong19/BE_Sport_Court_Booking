@@ -15,9 +15,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class AccountService {
@@ -106,5 +105,20 @@ public class AccountService {
         Account account = accountRepository.findAccountById(id);
         if (account == null) throw new AccountNotFoundException("Account không tồn tại");
         return account;
+    }
+
+    public List<Map<String, Object>> getAllManagers() {
+        List<Account> managerAccounts = accountRepository.findAllByRole(Role.MANAGER);
+
+        return managerAccounts.stream()
+                .map(account -> {
+                    Map<String, Object> managerObject = new HashMap<>();
+
+                    managerObject.put("id", account.getId());
+                    managerObject.put("fullName", account.getFullName());
+
+                    return managerObject;
+                })
+                .collect(Collectors.toList());
     }
 }
