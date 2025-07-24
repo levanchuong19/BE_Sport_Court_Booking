@@ -37,7 +37,6 @@ public class AccountService {
         Account account = modelMapper.map(newAccountRequest, Account.class);
 
         try {
-//            UUID managerId = authenticationService.getCurrentAccount().getManagerId();
             account.setPassword(passwordEncoder.encode(newAccountRequest.getPassword()));
             Account  acc = accountRepository.findAccountById(managerId);
             if(acc.getRole() != Role.MANAGER) {
