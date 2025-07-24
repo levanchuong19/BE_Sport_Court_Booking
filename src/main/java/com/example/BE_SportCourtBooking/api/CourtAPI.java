@@ -108,7 +108,6 @@ public class CourtAPI {
         }
     }
 
-
     @DeleteMapping("delete/{courtId}")
     public ResponseEntity<ApiResponse> deleteCourt(@PathVariable UUID courtId){
         try{
