@@ -2,7 +2,10 @@ package com.example.BE_SportCourtBooking.service;
 
 import com.example.BE_SportCourtBooking.entity.Account;
 import com.example.BE_SportCourtBooking.entity.BusinessLocation;
+import com.example.BE_SportCourtBooking.entity.Court;
+import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.LocationStatus;
+import com.example.BE_SportCourtBooking.entity.Enum.NotificationType;
 import com.example.BE_SportCourtBooking.entity.Enum.Role;
 import com.example.BE_SportCourtBooking.model.Request.BusinessLocationRequest;
 import com.example.BE_SportCourtBooking.model.Response.AccountResponse;
@@ -38,6 +41,9 @@ public class BusinessLocationService {
 
     @Autowired
     BusinessLocationRepo businessLocationRepo;
+
+    @Autowired
+    NotificationService notificationService;
 
     @Autowired
     ModelMapper modelMapper;
@@ -117,6 +123,22 @@ public class BusinessLocationService {
             throw new IllegalArgumentException("Business Location not found");
         }
         businessLocation.setIsDelete(true);
+        businessLocation.setStatus(LocationStatus.DELETED);
+
+        if(businessLocation.getCourts() != null) {
+            for (Court court : businessLocation.getCourts()) {
+                court.setIsDelete(true);
+                court.setStatus(CourtStatus.INACTIVE);
+            }
+        }
+
+        notificationService.sendNotification(
+                businessLocation.getOwner(),
+                "Địa điểm của bạn đã bị vô hiệu hoá",
+                "Vui lòng liên hệ quản trị viên của hệ thống để xử lý.",
+                NotificationType.SYSTEM,
+                null
+        );
         businessLocationRepo.save(businessLocation);
     }
 
@@ -227,14 +249,54 @@ public class BusinessLocationService {
     @Transactional
     public BusinessLocationResponse activeBusinessLocation(UUID id) {
         BusinessLocation businessLocation = businessLocationRepo.findBusinessLocationById(id);
+        Account owner = businessLocation.getOwner();
+
         if (businessLocation == null) {
             throw new IllegalArgumentException("Business Location not found");
         }
         if (businessLocation.getStatus() != LocationStatus.INACTIVE) {
-            throw new IllegalArgumentException("Business Location is not allow inactive");
+            throw new IllegalArgumentException("Business Location is not allowed to be active");
         }
+
+        if(owner.getRole() == Role.CUSTOMER) {
+            owner.setRole(Role.MANAGER);
+            accountRepository.save(owner);
+        }
+
         businessLocation.setStatus(LocationStatus.ACTIVE);
         businessLocationRepo.save(businessLocation);
+
+        notificationService.sendNotification(
+                businessLocation.getOwner(),
+                "Địa điểm của bạn đã được duyệt",
+                "Chúc mừng! Địa điểm của bạn đã được duyệt và hiện đã hoạt động.",
+                NotificationType.SYSTEM,
+                null
+        );
+
+        return modelMapper.map(businessLocation, BusinessLocationResponse.class);
+    }
+
+    public BusinessLocationResponse rejectBusinessLocation(UUID id, String reason) {
+        BusinessLocation businessLocation = businessLocationRepo.findBusinessLocationById(id);
+        if (businessLocation == null) {
+            throw new IllegalArgumentException("Business Location not found");
+        }
+        if (businessLocation.getStatus() != LocationStatus.INACTIVE) {
+            throw new IllegalArgumentException("Business Location is not allowed to be rejected");
+        }
+        businessLocation.setStatus(LocationStatus.REJECTED);
+        businessLocationRepo.save(businessLocation);
+
+        notificationService.sendNotification(
+                businessLocation.getOwner(),
+                "Địa điểm của bạn đã bị từ chối",
+                "Lí do: " + reason,
+                NotificationType.SYSTEM,
+                null
+        );
+
+        System.out.println("Đã tạo notification");
         return modelMapper.map(businessLocation, BusinessLocationResponse.class);
     }
 

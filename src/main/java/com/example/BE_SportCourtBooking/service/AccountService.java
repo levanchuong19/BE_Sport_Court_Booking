@@ -38,13 +38,20 @@ public class AccountService {
         try {
 //            UUID managerId = authenticationService.getCurrentAccount().getManagerId();
             account.setPassword(passwordEncoder.encode(newAccountRequest.getPassword()));
-            Account  acc = accountRepository.findAccountById(managerId);
-            if(acc.getRole() != Role.MANAGER) {
-                throw new IllegalArgumentException("Manager ID must be a manager or admin account.");
-            }else {
+            if (newAccountRequest.getRole() == Role.STAFF) {
+                if (managerId == null) {
+                    throw new IllegalArgumentException("Manager ID is required for STAFF accounts.");
+                }
+
+                Account managerAccount = accountRepository.findAccountById(managerId);
+                if (managerAccount == null || managerAccount.getRole() != Role.MANAGER) {
+                    throw new IllegalArgumentException("Manager ID must be a valid manager account.");
+                }
+
                 account.setManagerId(managerId);
-                account.setRole(Role.STAFF);
             }
+
+            account.setRole(newAccountRequest.getRole());
             return accountRepository.save(account);
         } catch (Exception e) {
             e.printStackTrace();
