@@ -1,6 +1,7 @@
 package com.example.BE_SportCourtBooking.service;
 
 import com.example.BE_SportCourtBooking.entity.Account;
+import com.example.BE_SportCourtBooking.entity.Court;
 import com.example.BE_SportCourtBooking.entity.Slot;
 import com.example.BE_SportCourtBooking.model.Request.ForgotPasswordRequest;
 import com.example.BE_SportCourtBooking.model.Response.EmailDetail;
@@ -14,6 +15,9 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 public class EmailService {
@@ -139,4 +143,5 @@ public class EmailService {
             throw new RuntimeException("Không thể gửi email cảm ơn cho slot " + slot.getId(), e);
         }
     }
+
 }

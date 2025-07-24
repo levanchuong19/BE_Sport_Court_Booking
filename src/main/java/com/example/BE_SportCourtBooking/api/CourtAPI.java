@@ -2,10 +2,7 @@ package com.example.BE_SportCourtBooking.api;
 import com.example.BE_SportCourtBooking.entity.Court;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtStatus;
 import com.example.BE_SportCourtBooking.entity.Enum.CourtType;
-import com.example.BE_SportCourtBooking.model.Request.CourtPricingRequest;
-import com.example.BE_SportCourtBooking.model.Request.CourtRequest;
-import com.example.BE_SportCourtBooking.model.Request.CourtStatusRequest;
-import com.example.BE_SportCourtBooking.model.Request.CourtUpdateRequest;
+import com.example.BE_SportCourtBooking.model.Request.*;
 import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
 import com.example.BE_SportCourtBooking.model.Response.CourtResponse;
 import com.example.BE_SportCourtBooking.service.CourtService;
@@ -237,6 +234,52 @@ public class CourtAPI {
             return ResponseEntity.status(403).body(createResponse(403, false,  "Get Court by Owner error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(createResponse(500, false, "Get Court by Owner error: " , e.getMessage()));
+        }
+    }
+
+    @PostMapping("sendReport/{courtId}")
+    public ResponseEntity<ApiResponse> sendReport( @RequestParam UUID staffId,
+                                                   @Valid @RequestBody ReportRequest ReportRequest) {
+        try {
+            return ResponseEntity.ok(createResponse(200, true, "Send Report successfully", courtService.sendReport(staffId,ReportRequest)));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Send Report error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Send Report error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false,  "Send Report error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Send Report error",  e.getMessage()));
+        }
+    }
+
+    @GetMapping("getReport/{staffId}")
+    public ResponseEntity<ApiResponse> getReportByStaffId(@PathVariable UUID staffId) {
+        try {
+            return ResponseEntity.ok(createResponse(200, true, "Get Report by Staff ID successfully", courtService.getReportsStaff(staffId)));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Get Report by Staff ID error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Get Report by Staff ID error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false,  "Get Report by Staff ID error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Get Report by Staff ID error: " , e.getMessage()));
+        }
+    }
+
+    @GetMapping("getReportByBusinessLocation/{businessLocationId}")
+    public ResponseEntity<ApiResponse> getReportByBusinessLocation(@PathVariable UUID businessLocationId) {
+        try {
+            return ResponseEntity.ok(createResponse(200, true, "Get Report by Business Location successfully", courtService.getAllReportByLocation(businessLocationId)));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Get Report by Business Location error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(createResponse(400, false, "Get Report by Business Location error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false,  "Get Report by Business Location error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Get Report by Business Location error: " , e.getMessage()));
         }
     }
 }
