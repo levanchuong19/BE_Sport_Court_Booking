@@ -66,6 +66,7 @@ public class SecurityConfig {
                                         "/api/location/getAll",
                                         "/api/slot/getAll",
                                         "/api/search",
+                                        "/api/court/get/**",
                                         "/api/location/getById/**",
                                         "/api/court/getByBusinessLocation/**",
                                         "/api/location/top3-BusinessLocations"
