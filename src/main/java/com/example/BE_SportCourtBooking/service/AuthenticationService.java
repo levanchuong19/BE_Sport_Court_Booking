@@ -187,10 +187,15 @@ public class AuthenticationService implements UserDetailsService {
                 account.setIsDelete(false);
                 accountRepository.save(account);
             }
-            //Login: Gán user vào context (nếu muốn dùng SecurityContext sau này)
+
+            account = accountRepository.findAccountByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Account not found after save"));
+
+            // Gán user vào context
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     account, null, account.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
             if (Boolean.TRUE.equals(account.getIsDelete())) {
                 throw new RuntimeException("Account is marked as deleted");
             }
@@ -207,6 +212,7 @@ public class AuthenticationService implements UserDetailsService {
             throw new RuntimeException("Google login authentication failed", e);
         }
     }
+
 
     private String generateRandomPassword(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%";
