@@ -82,23 +82,33 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
             "ORDER BY month", nativeQuery = true)
     List<Object[]> countNewManagersPerMonthThisYear();
 
-    @Query(value = "SELECT a.id AS manager_id, a.full_name, a.phone, " +
-            "COUNT(s.id) AS total_bookings, COALESCE(SUM(s.price), 0) AS total_revenue " +
-            "FROM slots s " +
-            "JOIN courts c ON s.court_id = c.id " +
-            "JOIN accounts a ON c.manager_id = a.id " +
-            "WHERE s.booking_status = 'PAID' " +
-            "AND a.role = 'MANAGER' " +
-            "GROUP BY a.id, a.full_name, a.phone " +
-            "ORDER BY a.id \n-- #pageable\n",
-            countQuery = "SELECT COUNT(DISTINCT a.id) " +
-                    "FROM slots s " +
-                    "JOIN courts c ON s.court_id = c.id " +
-                    "JOIN accounts a ON c.manager_id = a.id " +
-                    "WHERE s.booking_status = 'PAID' " +
-                    "AND a.role = 'MANAGER'",
-            nativeQuery = true)
-    Page<Object[]> countTotalPaidBookingsAndRevenueWithManagerBasicInfo(Pageable pageable);
+    @Query(
+            value = "SELECT " +
+                    "    a.id AS managerId, " +
+                    "    a.full_name AS fullName, " +
+                    "    a.phone AS phone, " +
+                    "    COUNT(DISTINCT CASE WHEN p.status = 'COMPLETED' THEN s.id END) AS totalBookings, " +
+                    "    COALESCE(SUM(CASE WHEN p.status = 'COMPLETED' THEN p.amount ELSE 0 END), 0) AS totalRevenue " +
+                    "FROM " +
+                    "    accounts a " +
+                    "LEFT JOIN " +
+                    "    courts c ON a.id = c.manager_id " +
+                    "LEFT JOIN " +
+                    "    slots s ON c.id = s.court_id " +
+                    "LEFT JOIN " +
+                    "    payments p ON s.id = p.slot_id " +
+                    "WHERE " +
+                    "    a.role = 'MANAGER' " +
+                    "GROUP BY " +
+                    "    a.id, a.full_name, a.phone " +
+                    "ORDER BY " +
+                    "    totalRevenue DESC",
+
+            countQuery = "SELECT COUNT(*) FROM accounts a WHERE a.role = 'MANAGER'", // <-- countQuery tùy chỉnh
+
+            nativeQuery = true
+    )
+    Page<Object[]> getManagerStatistics(Pageable pageable);
 
 
 

@@ -40,7 +40,6 @@ public class CourtFeedback {
     // Liên kết đến người dùng đánh giá
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
-    @JsonIgnore
     private Account account;
 
     // Liên kết đến sân được đánh giá

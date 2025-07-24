@@ -87,7 +87,10 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
                                @Param("startTime") String startTime,
                                @Param("endTime") String endTime);
 
-    @Query(value = "SELECT COUNT(*) FROM Slot s WHERE s.status = 'COMPLETED' AND DATE(s.create_at) = CURDATE()", nativeQuery = true)
+    @Query(value = "SELECT COUNT(s.id) " +
+            "FROM slots s " +
+            "JOIN payments p ON p.slot_id = s.id " +
+            "WHERE p.status = 'COMPLETED' AND DATE(s.create_at) = CURDATE()", nativeQuery = true)
     Long countTodayPaidBookings();
 
     @Query(
@@ -99,6 +102,20 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
             nativeQuery = true
     )
     BigDecimal sumTodayPaidIncome();
+
+    @Query(value = "SELECT COUNT(s.id) " +
+            "FROM slots s " +
+            "JOIN payments p ON p.slot_id = s.id " +
+            "WHERE p.status = 'COMPLETED' AND DATE(p.payment_date) = DATE(CURDATE() - INTERVAL 1 DAY)",
+            nativeQuery = true)
+    Long countYesterdayPaidBookings();
+
+    @Query(value = "SELECT COALESCE(SUM(p.amount), 0) " +
+            "FROM slots s " +
+            "JOIN payments p ON p.slot_id = s.id " +
+            "WHERE p.status = 'COMPLETED' AND DATE(p.payment_date) = DATE(CURDATE() - INTERVAL 1 DAY)",
+            nativeQuery = true)
+    BigDecimal sumYesterdayPaidIncome();
 
     @Query("SELECT FUNCTION('DATE', s.startDate) AS bookingDate, COUNT(s) AS total " +
             "FROM Slot s " +
