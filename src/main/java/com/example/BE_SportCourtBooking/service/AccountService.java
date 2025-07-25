@@ -6,8 +6,10 @@ import com.example.BE_SportCourtBooking.exception.AccountNotFoundException;
 import com.example.BE_SportCourtBooking.exception.DuplicateEntity;
 import com.example.BE_SportCourtBooking.model.Request.NewAccountRequest;
 import com.example.BE_SportCourtBooking.model.Request.UpdateAccountRequest;
+import com.example.BE_SportCourtBooking.model.Request.UpdateAccountStatusRequest;
 import com.example.BE_SportCourtBooking.model.Response.GetAccountResponse;
 import com.example.BE_SportCourtBooking.repository.AccountRepository;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -15,9 +17,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class AccountService {
@@ -38,13 +39,20 @@ public class AccountService {
 
         try {
             account.setPassword(passwordEncoder.encode(newAccountRequest.getPassword()));
-            Account  acc = accountRepository.findAccountById(managerId);
-            if(acc.getRole() != Role.MANAGER) {
-                throw new IllegalArgumentException("Manager ID must be a manager or admin account.");
-            }else {
+            if (newAccountRequest.getRole() == Role.STAFF) {
+                if (managerId == null) {
+                    throw new IllegalArgumentException("Manager ID is required for STAFF accounts.");
+                }
+
+                Account managerAccount = accountRepository.findAccountById(managerId);
+                if (managerAccount == null || managerAccount.getRole() != Role.MANAGER) {
+                    throw new IllegalArgumentException("Manager ID must be a valid manager account.");
+                }
+
                 account.setManagerId(managerId);
-                account.setRole(Role.STAFF);
             }
+
+            account.setRole(newAccountRequest.getRole());
             return accountRepository.save(account);
         } catch (Exception e) {
             e.printStackTrace();
@@ -101,10 +109,32 @@ public class AccountService {
                 .orElseThrow(() -> new AccountNotFoundException("Account không tồn tại"));
     }
 
-
     public Account getAccount(UUID id) {
         Account account = accountRepository.findAccountById(id);
         if (account == null) throw new AccountNotFoundException("Account không tồn tại");
         return account;
+    }
+
+    public List<Map<String, Object>> getAllManagers() {
+        List<Account> managerAccounts = accountRepository.findAllByRole(Role.MANAGER);
+
+        return managerAccounts.stream()
+                .map(account -> {
+                    Map<String, Object> managerObject = new HashMap<>();
+
+                    managerObject.put("id", account.getId());
+                    managerObject.put("fullName", account.getFullName());
+
+                    return managerObject;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void updateAccountStatus(UUID id, UpdateAccountStatusRequest request) {
+        Account account = accountRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
+        account.setIsDelete(request.isDeleted());
+        accountRepository.save(account);
     }
 }

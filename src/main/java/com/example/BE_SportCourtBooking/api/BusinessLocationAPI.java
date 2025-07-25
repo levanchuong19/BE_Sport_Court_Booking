@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -149,6 +150,22 @@ public class BusinessLocationAPI {
             return ResponseEntity.status(403).body(createResponse(403, false, "Activate Business Location error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(createResponse(500, false, "Activate Business Location error", e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("rejectLocation/{id}")
+    public ResponseEntity<ApiResponse> rejectBusinessLocation(@PathVariable UUID id, @RequestBody Map<String, String> body) {
+        try {
+            String reason = body.get("reason");
+            BusinessLocationResponse updatedLocation = businessLocationService.rejectBusinessLocation(id, reason);
+            return ResponseEntity.ok(createResponse(200, true, "Business Location rejected successfully", updatedLocation));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(createResponse(404, false, "Business Location not found", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(createResponse(403, false, "Rejected Business Location error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(createResponse(500, false, "Rejected Business Location error", e.getMessage()));
         }
     }
 

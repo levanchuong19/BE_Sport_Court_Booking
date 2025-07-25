@@ -3,17 +3,21 @@ package com.example.BE_SportCourtBooking.api;
 import com.example.BE_SportCourtBooking.entity.Account;
 import com.example.BE_SportCourtBooking.model.Request.NewAccountRequest;
 import com.example.BE_SportCourtBooking.model.Request.UpdateAccountRequest;
+import com.example.BE_SportCourtBooking.model.Request.UpdateAccountStatusRequest;
 import com.example.BE_SportCourtBooking.model.Response.ApiResponse;
 import com.example.BE_SportCourtBooking.model.Response.GetAccountResponse;
 import com.example.BE_SportCourtBooking.service.AccountService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
@@ -72,5 +76,21 @@ public class AccountAPI {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @GetMapping("/managers")
+    public ResponseEntity<List<Map<String, Object>>> getAllManagers() {
+        List<Map<String, Object>> managers = accountService.getAllManagers();
+        return ResponseEntity.ok(managers);
+    }
+    
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> updateAccountStatus(
+            @PathVariable UUID id,
+            @RequestBody UpdateAccountStatusRequest request
+    ) {
+        accountService.updateAccountStatus(id, request);
+        return ResponseEntity.ok("Cập nhật trạng thái thành công");
+
     }
 }
