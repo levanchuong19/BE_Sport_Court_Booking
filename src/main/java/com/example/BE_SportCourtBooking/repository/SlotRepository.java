@@ -39,7 +39,7 @@ public interface SlotRepository extends JpaRepository<Slot, UUID> {
             s.slotType, s.status, s.bookingStatus,
             new com.example.BE_SportCourtBooking.model.Response.CourtResponse(
                 c.id, c.courtType, c.courtName, c.description, c.status, null, null,
-                c.yearBuild, c.length, c.width, c.maxPlayers, c.businessLocation
+                c.yearBuild, c.length, c.width, c.maxPlayers, c.isDelete, c.businessLocation
             ),
             p.amount
         )
