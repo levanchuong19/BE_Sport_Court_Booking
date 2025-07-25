@@ -28,6 +28,7 @@ public class CourtResponse {
     Double length;
     Double width;
     Integer maxPlayers;
+    Boolean isDelete;
     BusinessLocation businessLocation;
 
     @Data
