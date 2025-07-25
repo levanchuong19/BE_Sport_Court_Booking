@@ -252,7 +252,6 @@ public class BusinessLocationService {
     @Transactional
     public BusinessLocationResponse activeBusinessLocation(UUID id) {
         BusinessLocation businessLocation = businessLocationRepo.findBusinessLocationById(id);
-        Account owner = businessLocation.getOwner();
 
         if (businessLocation == null) {
             throw new IllegalArgumentException("Business Location not found");
@@ -260,6 +259,8 @@ public class BusinessLocationService {
         if (businessLocation.getStatus() != LocationStatus.INACTIVE) {
             throw new IllegalArgumentException("Business Location is not allowed to be active");
         }
+
+        Account owner = businessLocation.getOwner();
 
         if(owner.getRole() == Role.CUSTOMER) {
             owner.setRole(Role.MANAGER);
@@ -299,7 +300,6 @@ public class BusinessLocationService {
                 null
         );
 
-        System.out.println("Đã tạo notification");
         return modelMapper.map(businessLocation, BusinessLocationResponse.class);
     }
 
