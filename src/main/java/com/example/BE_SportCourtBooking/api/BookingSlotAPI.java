@@ -50,7 +50,7 @@ public class BookingSlotAPI {
                                                    @RequestParam(required = false)SlotStatus slotStatus,
                                                    @RequestParam(required = false) Boolean isDelete,
                                                    @RequestParam(defaultValue = "0") int page,
-                                                   @RequestParam(defaultValue = "10") int size)  {
+                                                   @RequestParam(defaultValue = "50") int size)  {
         try {
             Page<SlotDTO> slot = slotService.getAllSlot(slotType,slotStatus,isDelete, page, size);
             return ResponseEntity.ok(createResponse(200, true, "Get all slot successfully", slot));
