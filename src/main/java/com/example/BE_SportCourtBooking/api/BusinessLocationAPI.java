@@ -141,6 +141,7 @@ public class BusinessLocationAPI {
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("activeLocation/{id}")
     public ResponseEntity<ApiResponse> activeBusinessLocation(@PathVariable UUID id) {
+        System.out.println("🔍 ID nhận được: " + id);
         try {
             BusinessLocationResponse updatedLocation = businessLocationService.activeBusinessLocation(id);
             return ResponseEntity.ok(createResponse(200, true, "Business Location activated successfully", updatedLocation));
