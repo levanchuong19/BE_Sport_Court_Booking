@@ -32,7 +32,7 @@ public class SupportService {
         return toResponse(saved);
     }
 
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public List<SupportResponse> getAllFeedback() {
         return supportRepository.findAll()
                 .stream()
